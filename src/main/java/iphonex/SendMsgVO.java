@@ -6,7 +6,7 @@ public class SendMsgVO {
     private String cid = "VXuydc62VJvSg5smNY10J9C1EUlz/xmZjsz7R25PHDe5yg8XiKY6x7uS9DA/ZwbDMrWixOLNx+AuhP94VJ/bEqlN+jNICagcgrrpMXMChvM=";
     private String city = "020";
     private String ctid = "VXuydc62VJvSg5smNY10J9C1EUlz/xmZjsz7R25PHDe5yg8XiKY6x7uS9DA/ZwbDMrWixOLNx+AuhP94VJ/bEqlN+jNICagcgrrpMXMChvM=";
-    private String cv = "4.0.0";
+    private String cv = "4.1.0";
     private String en = "0";
     private String imei = "864803032732671";
     private String nt = "3";
@@ -19,7 +19,7 @@ public class SendMsgVO {
     private String sv = "5.1";
     private String t = "";
     private String tel = "99999999999";
-    private String xc = "A0001";
+    private String xc = "A2320";
     private String xk = "64efba343e92aaee3b569bfef6f0b1df9bdd71af4fd7067ffb917bd9c52edcd340e0c7fc";
     
     public String getAk() {

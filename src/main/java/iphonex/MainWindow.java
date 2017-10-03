@@ -4,6 +4,7 @@ import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.security.MessageDigest;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -73,9 +74,32 @@ public class MainWindow {
                 MsgReqBody msgReqBody = new MsgReqBody();
                 msgReqBody.setCellNum("13710842223");
                 sendMsgVO.setReqBody(msgReqBody);
+                String string = JSONObject.fromObject(sendMsgVO).toString();
                 RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), JSONObject.fromObject(sendMsgVO).toString());
                 Builder builder = new Request.Builder().url("https://clientaccess.10086.cn/biz-orange/LN/uamrandcode/sendMsgLogin").post(body);
-                builder.addHeader("xs", "8e25a666b86982ea194d4b6415a7d42c");
+//                long time = System.currentTimeMillis();
+//                String newstr = null;
+//                try {
+//                    char hexDigits[]={'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+//                    MessageDigest md5 = MessageDigest.getInstance("MD5");
+//                    //加密后的字符串
+//                    byte[] md = md5.digest(String.valueOf(time).getBytes("utf-8"));
+//                    int j = md.length;
+//                    char str[] = new char[j * 2];
+//                    int k = 0;
+//                    for (int i = 0; i < j; i++) {
+//                        byte byte0 = md[i];
+//                        str[k++] = hexDigits[byte0 >>> 4 & 0xf];
+//                        str[k++] = hexDigits[byte0 & 0xf];
+//                    }
+//                    newstr = new String(str);
+//                    newstr = newstr.toLowerCase();
+//                } catch (Exception ex) {
+//                    ex.printStackTrace();
+//                }
+                
+                builder.addHeader("xs", "1c6781282933d1ef7fde7e4b85ca0d28");    //020
+//                builder.addHeader("xs", "2a161b81b6150cc0308d8723430eb959");     //0754
                 Request request = builder.build();
                
                 Call call= client.newCall(request);
@@ -103,12 +127,13 @@ public class MainWindow {
                 
                 SendMsgVO sendMsgVO = new SendMsgVO();
                 LoginReqBody loginReqBody = new LoginReqBody();
-                loginReqBody.setCellNum("Y+kFfUs00E2xNuRFnYKaq7nGWuy1FGlqK+L8xt2Cul9L3uKMm3kfDi0EbROFlykL4J6nPOMi+qfWqjmnedz7OgU0cFz4/A73/PraX5t5g4zOPe7moPD85dFerXfEHLW1HeW3EFOOjFDL2tu1d0ORY1dvUiLdlJc3/sxzq2HL3lc=");
+                loginReqBody.setCellNum("WcLzYP249H2xpJ8SZpWLiV7uJR3GA53R90xf56y1p3dy4dtoVMe/Qv5EMVrZryF4HhZss20Yls7AY7g+66PdOH8oCtTC2dE45EiAKsHRFlllPlegYtMq5PsEEIxn5VIoHREeH3rUCEYDyp29wDZ2HgA3dATr6YRDosYz6cETioE=");
                 loginReqBody.setVerifyCode(yzm.getText().trim());
                 sendMsgVO.setReqBody(loginReqBody);
                 String string = JSONObject.fromObject(sendMsgVO).toString();
                 RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), JSONObject.fromObject(sendMsgVO).toString());
                 Builder builder = new Request.Builder().url("https://clientaccess.10086.cn/biz-orange/LN/uamrandcodelogin/login").post(body);
+                String xs = MD5Util.MD5("https://clientaccess.10086.cn/biz-orange/LN/uamrandcodelogin/login" + JSONObject.fromObject(loginReqBody) + "_Leadeon/SecurityOrganization");
                 builder.addHeader("xs", "a6cf74de15455d86955766d53201efcc");
                 Request request = builder.build();
                
