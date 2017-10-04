@@ -115,7 +115,7 @@ public class MainWindow {
                 RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), JSONObject.fromObject(sendMsgVO).toString());
                 Builder builder = new Request.Builder().url("https://clientaccess.10086.cn/biz-orange/LN/uamrandcodelogin/login").post(body);
                 String xs = MD5Util.MD5("https://clientaccess.10086.cn/biz-orange/LN/uamrandcodelogin/login" + JSONObject.fromObject(loginReqBody) + "_Leadeon/SecurityOrganization");
-                builder.addHeader("xs", "a6cf74de15455d86955766d53201efcc");
+                builder.addHeader("xs", xs);
                 Request request = builder.build();
                
                 Call call= client.newCall(request);
@@ -156,6 +156,8 @@ public class MainWindow {
                         .addHeader("cookie", "is_login=true;userinfokey=%7b%22loginType%22%3a%2201%22%2c%22provinceName%22%3a%22200%22%2c%22pwdType%22%3a%2202%22%7d;CmLocation=200|200;PHPSESSID=q8pl44pc3er70qgquvnbi5p5f6")
                         .addHeader("Referer", "http://touch.10086.cn/goods/200_200_1045210_1040095.html")
                         .addHeader("Origin", "http://touch.10086.cn")
+                        .addHeader("X-Requested-With", "com.greenpoint.android.mc10086.activity")
+                        .addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 5.1; OPPO A37m Build/LMY47I; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/43.0.2357.121 Mobile Safari/537.36 leadeon/4.1.0")
                         .url("http://touch.10086.cn/ajax/buy/buy.json")
                         .post(formBody);
                 Request request = builder.build();
