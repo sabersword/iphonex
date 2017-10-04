@@ -8,16 +8,12 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import okhttp3.*;
-import org.apache.commons.lang.StringUtils;
 
 import javax.net.ssl.*;
 
 public class WebBuy {
-    private String cookie;
     private HashMap<String,String> cookieMap;
     private String cellNum;
     private String cellNumEnc;
@@ -36,23 +32,11 @@ public class WebBuy {
         OkHttpClient.Builder mBuilder = new OkHttpClient.Builder();
         mBuilder.sslSocketFactory(createSSLSocketFactory());
         mBuilder.hostnameVerifier(new WebBuy.TrustAllHostnameVerifier());
-//        mBuilder.cookieJar(new CookieJar() {
-//            @Override
-//            public void saveFromResponse(HttpUrl httpUrl, List<Cookie> list) {
-//                cookieStore.put(httpUrl.host(), list);
-//            }
-//
-//            @Override
-//            public List<Cookie> loadForRequest(HttpUrl httpUrl) {
-//                List<Cookie> cookies = cookieStore.get(httpUrl.host());
-//                return cookies != null ? cookies : new ArrayList<Cookie>();
-//            }
-//        });
         okHttpClient = mBuilder.build();
         cookieMap = new HashMap<>();
+        //自定义 PHPSESSID
         cookieMap.put("PHPSESSID", "nhjevoooaj1t5eb8jh337ihhr6");
         cookieMap.put("CmLocation", "200|200");
-        System.out.println("create client success");
     }
 
     /**
@@ -447,7 +431,6 @@ public class WebBuy {
         try{
             Response response = call.execute();
             addRspCookie(response.headers("Set-Cookie"));
-            System.out.println("checkorder: " + response.body().string());
             String result = response.body().string();
             addressId = getValue(result, "address_id\" value=\"", "\"");
             System.out.println("addressId:" + addressId);
@@ -464,10 +447,12 @@ public class WebBuy {
         data += "&ticket_no=";
         data += "&cart_code=" + cartCode;
         RequestBody requestBody = RequestBody.create(mediaType, data);
+        //注意User-Agent要根据抓包的来设置，还用okhttp则出现系统繁忙
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Referer", "http://touch.10086.cn/order/checkorder.php?cart_code=" + cartCode)
                 .addHeader("Cookie", getReqCookie())
+                .addHeader("User-Agent","Mozilla/5.0 (Linux; Android 6.0.1; SM-C7000 Build/MMB29M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/55.0.2883.91 Mobile Safari/537.36 leadeon/4.0.0")
                 .post(requestBody)
                 .build();
         Call call = okHttpClient.newCall(request);
@@ -500,8 +485,5 @@ public class WebBuy {
         webBuy.buy();
         webBuy.checkOrder();
         webBuy.submitOrder();
-//        String result = "<input type=\"hidden\" name=\"address_id\" value=\"1213213\" />";
-//        String re = "address_id\" value=\"";
-//        System.out.println(webBuy.getValue(result, re, "\""));
     }
 }
