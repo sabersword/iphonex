@@ -2,6 +2,8 @@ package iphonex;
 
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -25,36 +27,32 @@ public class WebBuy {
     private String artifact;
     private OkHttpClient okHttpClient;
     private final HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
-    private final String goodsUrl = "http://touch.10086.cn/goods/200_200_1045210_1040095.html?WT.ac=iphoneT_iphone8";
+    private final String goodsUrl = "http://touch.10086.cn/goods/200_200_1045210_1040095.html";
     private final String loginTouchUrl = "https://login.10086.cn/html/login/touch.html?channelID=12012&backUrl=http%3A%2F%2Ftouch.10086.cn%2Fgoods%2F200_200_1045210_1040095.html%3FWT.ac%3DiphoneT_iphone8%3Fforcelogin%3D1";
 
-    public WebBuy(String cellNum) {
+    public WebBuy(String cellNum, String cellNumEnc){
         this.cellNum = cellNum;
+        this.cellNumEnc = cellNumEnc;
         OkHttpClient.Builder mBuilder = new OkHttpClient.Builder();
         mBuilder.sslSocketFactory(createSSLSocketFactory());
-        mBuilder.hostnameVerifier(new TrustAllHostnameVerifier());
+        mBuilder.hostnameVerifier(new WebBuy.TrustAllHostnameVerifier());
 //        mBuilder.cookieJar(new CookieJar() {
 //            @Override
 //            public void saveFromResponse(HttpUrl httpUrl, List<Cookie> list) {
-//                if (httpUrl.url().toString().contains("login.htm?accountType=0")) {
-//                    cookieStore.put(httpUrl.host(), list);
-//                }
+//                cookieStore.put(httpUrl.host(), list);
 //            }
 //
 //            @Override
 //            public List<Cookie> loadForRequest(HttpUrl httpUrl) {
-//                List<Cookie> cookies = cookieStore.get("login.10086.cn");  //httpUrl.host()
-//                // 注意登录和购买不是同一个host
-////                List<Cookie> loginCookies = cookieStore.get("login.10086.cn");
-////                if (cookies == null){cookies = new ArrayList<Cookie>(); }
-////                if(loginCookies != null && !cookies.equals(loginCookies)) {
-////                    cookies.addAll(loginCookies);
-////                }
+//                List<Cookie> cookies = cookieStore.get(httpUrl.host());
 //                return cookies != null ? cookies : new ArrayList<Cookie>();
 //            }
 //        });
         okHttpClient = mBuilder.build();
         cookieMap = new HashMap<>();
+        cookieMap.put("PHPSESSID", "nhjevoooaj1t5eb8jh337ihhr6");
+        cookieMap.put("CmLocation", "200|200");
+        System.out.println("create client success");
     }
 
     /**
@@ -69,7 +67,7 @@ public class WebBuy {
 
         try {
             SSLContext sc = SSLContext.getInstance("TLS");
-            sc.init(null, new TrustManager[]{new TrustAllManager()},
+            sc.init(null, new TrustManager[]{new WebBuy.TrustAllManager()},
                     new SecureRandom());
             sSLSocketFactory = sc.getSocketFactory();
         } catch (Exception e) {
@@ -102,6 +100,63 @@ public class WebBuy {
             return true;
         }
     }
+    public  boolean sendMsg(){
+        String url="https://clientaccess.10086.cn/biz-orange/LN/uamrandcode/sendMsgLogin";
+        MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+        String data = "{\"ak\":\"F4AA34B89513F0D087CA0EF11A3277469DC74905\",\"cid\":\"ZQ7NGnFe+2Ob+ELjX6nA80oNw9raJFK96ckDGM/SJqdKa110jeool++QXR4R/VmoUbYy1yY6S0Tv7LQOgp8OxK/6BUQ0L7PEE0y+VwFEAMA=\",\"city\":\"0755\",\"ctid\":\"ZQ7NGnFe+2Ob+ELjX6nA80oNw9raJFK96ckDGM/SJqdKa110jeool++QXR4R/VmoUbYy1yY6S0Tv7LQOgp8OxK/6BUQ0L7PEE0y+VwFEAMA=\",\"cv\":\"4.0.0\",\"en\":\"0\",\"imei\":\"358811074939040\",\"nt\":\"3\",\"prov\":\"200\",\"reqBody\":{\"cellNum\":\"CELL_NUM\"},\"sb\":\"samsung\",\"sn\":\"SM-C7000\",\"sp\":\"1080x1920\",\"st\":\"1\",\"sv\":\"6.0.1\",\"t\":\"\",\"tel\":\"99999999999\",\"xc\":\"A0001\",\"xk\":\"8134206949ee8bbc89e534902056abc3b91c333ac8f5eb629e36cb0a3b37825736bf236e\"}";
+        data = data.replace("CELL_NUM", this.cellNum);
+        String xs = url + "_" + data + "_Leadeon/SecurityOrganization";
+        xs = getMd5(xs);
+        System.out.println("xs:" + xs);
+        RequestBody body = RequestBody.create(JSON,data);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("xs", xs)
+
+                .build();
+        Call call = okHttpClient.newCall(request);
+        try {
+            Response response = call.execute();
+            String result = response.body().string();
+            System.out.println(result);
+            if (result.contains("\"retDesc\":\"SUCCESS\"")){
+                return true;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+    public void login(){
+        System.out.print("输入验证码：");
+        Scanner scanner = new Scanner(System.in);
+        verifyCode = scanner.nextLine();
+        String url = "https://clientaccess.10086.cn/biz-orange/LN/uamrandcodelogin/login";
+        MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
+        String data = "{\"ak\":\"F4AA34B89513F0D087CA0EF11A3277469DC74905\",\"cid\":\"ZQ7NGnFe+2Ob+ELjX6nA80oNw9raJFK96ckDGM/SJqdKa110jeool++QXR4R/VmoUbYy1yY6S0Tv7LQOgp8OxK/6BUQ0L7PEE0y+VwFEAMA=\",\"city\":\"0755\",\"ctid\":\"ZQ7NGnFe+2Ob+ELjX6nA80oNw9raJFK96ckDGM/SJqdKa110jeool++QXR4R/VmoUbYy1yY6S0Tv7LQOgp8OxK/6BUQ0L7PEE0y+VwFEAMA=\",\"cv\":\"4.0.0\",\"en\":\"0\",\"imei\":\"358811074939040\",\"nt\":\"3\",\"prov\":\"200\",\"reqBody\":{\"cellNum\":\"CELL_NUM\",\"imei\":\"358811074939040\",\"sendSmsFlag\":\"1\",\"verifyCode\":\"VERIFY_CODE\"},\"sb\":\"samsung\",\"sn\":\"SM-C7000\",\"sp\":\"1080x1920\",\"st\":\"1\",\"sv\":\"6.0.1\",\"t\":\"\",\"tel\":\"99999999999\",\"xc\":\"A2061\",\"xk\":\"8134206949ee8bbc89e534902056abc3b91c333ac8f5eb629e36cb0a3b37825736bf236e\"}";
+        data = data.replace("CELL_NUM", this.cellNumEnc).replace("VERIFY_CODE", this.verifyCode);
+        System.out.println(data);
+        String xs = url + "_" + data + "_Leadeon/SecurityOrganization";
+        xs = getMd5(xs);
+        System.out.println("xs:" + xs);
+        RequestBody body = RequestBody.create(mediaType, data);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("xs", xs)
+                .build();
+        Call call = okHttpClient.newCall(request);
+        try {
+            Response response = call.execute();
+            System.out.println(response.body().string());
+            addRspCookie(response.headers("Set-Cookie"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
     public void getGoods(){
         Request request = new Request.Builder().url(goodsUrl).build();
         Call call = okHttpClient.newCall(request);
@@ -115,7 +170,7 @@ public class WebBuy {
         Request request = new Request.Builder()
                             .url(loginTouchUrl)
                             .addHeader("Referer", goodsUrl)
-                            .addHeader("Cookie", "CmLocation=200|200")
+                            .addHeader("Cookie", getReqCookie())
                             .build();
         Call call = okHttpClient.newCall(request);
         try{
@@ -225,6 +280,29 @@ public class WebBuy {
 
         }
     }
+
+    public  static String getMd5(String plainText) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(plainText.getBytes());
+            byte b[] = md.digest();
+            int i;
+            StringBuffer buf = new StringBuffer("");
+            for (int offset = 0; offset < b.length; offset++) {
+                i = b[offset];
+                if (i < 0)
+                    i += 256;
+                if (i < 16)
+                    buf.append("0");
+                buf.append(Integer.toHexString(i));
+            }
+            return buf.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
     public void getArtifact(){
         String url = "http://touch.10086.cn/sso/getartifact.php?backurl=" + loginTouchUrl;
         url += "&artifact=" + artifact;
@@ -243,7 +321,7 @@ public class WebBuy {
         }
     }
     public void getGoodsLogin(){
-        String url = goodsUrl + "?forcelogin=1";
+        String url = goodsUrl + "?WT.ac=iphoneT_iphone8?forcelogin=1";
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Cookie", getReqCookie())
@@ -254,8 +332,6 @@ public class WebBuy {
             addRspCookie(response.headers("Set-Cookie"));
             //获取address_id
             String result = response.body().string();
-            addressId = getValue(result, "address_id\" value=\"", "\"");
-            System.out.println("addressId:" + addressId);
 
         }catch (IOException e){
 
@@ -271,7 +347,7 @@ public class WebBuy {
         String url = "http://touch.10086.cn/ajax/detail/getstock.json?goods_id=1045210&merchant_id=1000049&sale_type=1&sku_id=1040095";
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("Referer", goodsUrl + "?forcelogin=1")
+                .addHeader("Referer", goodsUrl)
                 .addHeader("Cookie", getReqCookie())
                 .build();
         Call call = okHttpClient.newCall(request);
@@ -288,7 +364,7 @@ public class WebBuy {
         String url = "http://touch.10086.cn/ajax/user/userinfo.json?province_id=200&city_id=200";
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("Referer", goodsUrl + "?forcelogin=1")
+                .addHeader("Referer", goodsUrl)
                 .addHeader("Cookie", getReqCookie())
                 .build();
         Call call = okHttpClient.newCall(request);
@@ -308,25 +384,43 @@ public class WebBuy {
         for(String cookieLine: cookies){
             String[] cookieArr = cookieLine.split(";");
             for(String cookie: cookieArr){
-                cookieMap.put(cookie, "");
+                System.out.println(cookie);
+                String[] arr = cookie.split("=");
+                if (arr.length == 2) {
+                    cookieMap.put(arr[0], arr[1]);
+                }
             }
         }
 
     }
     public String getReqCookie(){
-        if(cookieMap.size() == 0) return "";
-        return StringUtils.join(cookieMap.keySet().toArray(), ";");
+        String cookie = "";
+        for (String key: cookieMap.keySet()){
+            cookie += key + "=" + cookieMap.get(key) + ";";
+        }
+        return cookie;
 
     }
-    public void webBuy(){
+    public String  getBuyCookie(){
+        String cookie = "PHPSESSID=" + cookieMap.get("PHPSESSID") + ";";
+        cookie += "is_login=" + cookieMap.get("is_login") + ";";
+        cookie += "CmLocation=" + cookieMap.get("CmLocation") + ";";
+        cookie += "userinfokey=" + cookieMap.get("userinfokey") + ";";
+        return cookie;
+    }
+    public void buy(){
         String url = "http://touch.10086.cn/ajax/buy/buy.json";
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded; charset=UTF-8");
-        String data = "sku%5B0%5D%5BModelId%5D=1040095&sku%5B0%5D%5BGoodsId%5D=1045210&sku%5B0%5D%5BNum%5D=1&sku%5B0%5D%5BItemFrom%5D=iphoneT_iphone8%3Fforcelogin&sku%5B0%5D%5BChannel%5D=1&sku%5B0%5D%5BProvinceId%5D=200&sku%5B0%5D%5BCityId%5D=200";
+        String data = "sku%5B0%5D%5BModelId%5D=1040095&sku%5B0%5D%5BGoodsId%5D=1045210&sku%5B0%5D%5BNum%5D=1&sku%5B0%5D%5BChannel%5D=1&sku%5B0%5D%5BProvinceId%5D=200&sku%5B0%5D%5BCityId%5D=200";
+//        String data = "sku%5B0%5D%5BModelId%5D=1040095&sku%5B0%5D%5BGoodsId%5D=1045210&sku%5B0%5D%5BNum%5D=1&sku%5B0%5D%5BItemFrom%5D=iphoneT_iphone8%3Fforcelogin&sku%5B0%5D%5BChannel%5D=1&sku%5B0%5D%5BProvinceId%5D=200&sku%5B0%5D%5BCityId%5D=200";
         RequestBody requestBody = RequestBody.create(mediaType, data);
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("Referer", goodsUrl + "?forcelogin=1")
-                .addHeader("Cookie", getReqCookie())
+//                .addHeader("Referer", goodsUrl + "?WT.ac=iphoneT_iphone8?forcelogin=1")
+                .addHeader("Referer", goodsUrl)
+//                .addHeader("Cookie", getReqCookie() + ";itemFrom=iphoneT_iphone8%3Fforcelogin")
+                .addHeader("Cookie", getBuyCookie())
+                .addHeader("User-Agent","Mozilla/5.0 (Linux; Android 6.0.1; SM-C7000 Build/MMB29M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/55.0.2883.91 Mobile Safari/537.36 leadeon/4.0.0")
                 .post(requestBody)
                 .build();
         Call call = okHttpClient.newCall(request);
@@ -345,14 +439,18 @@ public class WebBuy {
         url += "cart_code=" + cartCode;
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("Referer", goodsUrl + "?forcelogin=1")
+                .addHeader("Referer", goodsUrl)
                 .addHeader("Cookie", getReqCookie())
+                .addHeader("User-Agent","Mozilla/5.0 (Linux; Android 6.0.1; SM-C7000 Build/MMB29M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/55.0.2883.91 Mobile Safari/537.36 leadeon/4.0.0")
                 .build();
         Call call = okHttpClient.newCall(request);
         try{
             Response response = call.execute();
             addRspCookie(response.headers("Set-Cookie"));
             System.out.println("checkorder: " + response.body().string());
+            String result = response.body().string();
+            addressId = getValue(result, "address_id\" value=\"", "\"");
+            System.out.println("addressId:" + addressId);
         }catch (IOException e){
 
         }
@@ -384,8 +482,8 @@ public class WebBuy {
     }
 
     public static void main(String args[]) {
+        WebBuy webBuy = new WebBuy("15013894358","ZOqzoAEe9U0KVnOUPK0IFfQRenD9kYL44VxyFPSionPEAMID4D60J9MENvkxRH0gRCWZKF+k22uukP4JTJlME7hm6cVMrgkg5Imow1KxWqrXqPUClS2RhpcnUTjEoSZFelmwTGe+o7kxmfewYdj/ofxtsXd+4EPFZUOGkew965g=");
 
-        WebBuy webBuy = new WebBuy("15013894358");
         webBuy.getGoods();
         webBuy.getLoginTouch();
         webBuy.checkUidAvailable();
@@ -393,11 +491,13 @@ public class WebBuy {
         webBuy.chkNumberAction();
         webBuy.sendRandomCodeAction();
         webBuy.webLogin();
+//        webBuy.sendMsg();
+//        webBuy.login();
         webBuy.getArtifact();
         webBuy.getGoodsLogin();
         webBuy.getstock();
         webBuy.userinfo();
-        webBuy.webBuy();
+        webBuy.buy();
         webBuy.checkOrder();
         webBuy.submitOrder();
 //        String result = "<input type=\"hidden\" name=\"address_id\" value=\"1213213\" />";
