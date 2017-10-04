@@ -13,6 +13,7 @@ import javax.swing.JTextField;
 import net.sf.json.JSONObject;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -77,26 +78,6 @@ public class MainWindow {
                 String string = JSONObject.fromObject(sendMsgVO).toString();
                 RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), JSONObject.fromObject(sendMsgVO).toString());
                 Builder builder = new Request.Builder().url("https://clientaccess.10086.cn/biz-orange/LN/uamrandcode/sendMsgLogin").post(body);
-//                long time = System.currentTimeMillis();
-//                String newstr = null;
-//                try {
-//                    char hexDigits[]={'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
-//                    MessageDigest md5 = MessageDigest.getInstance("MD5");
-//                    //加密后的字符串
-//                    byte[] md = md5.digest(String.valueOf(time).getBytes("utf-8"));
-//                    int j = md.length;
-//                    char str[] = new char[j * 2];
-//                    int k = 0;
-//                    for (int i = 0; i < j; i++) {
-//                        byte byte0 = md[i];
-//                        str[k++] = hexDigits[byte0 >>> 4 & 0xf];
-//                        str[k++] = hexDigits[byte0 & 0xf];
-//                    }
-//                    newstr = new String(str);
-//                    newstr = newstr.toLowerCase();
-//                } catch (Exception ex) {
-//                    ex.printStackTrace();
-//                }
                 
                 builder.addHeader("xs", "1c6781282933d1ef7fde7e4b85ca0d28");    //020
 //                builder.addHeader("xs", "2a161b81b6150cc0308d8723430eb959");     //0754
@@ -155,5 +136,49 @@ public class MainWindow {
         });
         btnNewButton_1.setBounds(273, 46, 93, 23);
         frame.getContentPane().add(btnNewButton_1);
+        
+        JButton buyButton = new JButton("购买");
+        buyButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String sku = "1040095";
+                String goodsId = "1045210";
+//                String json = "sku[0][ModelId]=" + sku + "&sku[0][GoodsId]=" + goodsId + "&sku[0][Num]=1&sku[0][Channel]=1&sku[0][ProvinceId]=200&sku[0][CityId]=200";
+//                RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json);
+                FormBody formBody = new FormBody.Builder()
+                        .add("sku[0][ModelId]", sku)
+                        .add("sku[0][GoodsId]", goodsId)
+                        .add("sku[0][Num]", "1")
+                        .add("sku[0][Channel]", "1")
+                        .add("sku[0][ProvinceId]", "200")
+                        .add("sku[0][CityId]", "200")
+                        .build();
+                Builder builder = new Request.Builder()
+                        .addHeader("cookie", "is_login=true;userinfokey=%7b%22loginType%22%3a%2201%22%2c%22provinceName%22%3a%22200%22%2c%22pwdType%22%3a%2202%22%7d;CmLocation=200|200;PHPSESSID=q8pl44pc3er70qgquvnbi5p5f6")
+                        .addHeader("Referer", "http://touch.10086.cn/goods/200_200_1045210_1040095.html")
+                        .addHeader("Origin", "http://touch.10086.cn")
+                        .url("http://touch.10086.cn/ajax/buy/buy.json")
+                        .post(formBody);
+                Request request = builder.build();
+               
+                Call call= client.newCall(request);
+                call.enqueue(new Callback() {
+                    
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        String str = response.body().string();
+                        System.out.println(str);
+                    }
+                    
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        System.out.println("购买");
+                    }
+                });
+                
+                
+            }
+        });
+        buyButton.setBounds(375, 46, 93, 23);
+        frame.getContentPane().add(buyButton);
     }
 }
