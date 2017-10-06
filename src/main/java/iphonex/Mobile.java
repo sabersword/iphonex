@@ -16,8 +16,8 @@ import java.util.Vector;
 public class Mobile extends JFrame{
 	public static JLabel labelSendMsg,labelLogin,labelBuy,labelSave,labelStock;
 	public static JTable table;
-	public static JButton btnLoad,btnSendMsg,btnLogin,btnBuy,btnSave;
-	private JTextField inputMaxSendMsgReq,inputMaxLoginReq,inputMaxBuyReq,inputProdID,inputModelID;
+	public static JButton btnLoad,btnSendMsg,btnLogin,btnBuy,btnSave,btnAddAddress;
+	private JTextField inputMaxSendMsgReq,inputMaxLoginReq,inputMaxBuyReq,inputGoodsId,inputSkuId;
 	public  volatile static String localPath;
 	public static FileWriter fileWriterLogin,fileWriterGuess;
 	public static BufferedWriter bufferWriterLogin,bufferWriterGuess;
@@ -120,21 +120,26 @@ public class Mobile extends JFrame{
 		labelSave.setFont(new Font("微软雅黑",Font.PLAIN,12));
 		labelSave.setBounds(40, 250, 90, 20);
 		
-		inputProdID=new JTextField();
-		inputProdID.setBounds(40, 270, 90, 20);
-		inputProdID.setHorizontalAlignment(JTextField.CENTER);
-		inputProdID.setText("1022546");
+		inputGoodsId=new JTextField();
+		inputGoodsId.setBounds(40, 270, 90, 20);
+		inputGoodsId.setHorizontalAlignment(JTextField.CENTER);
+		inputGoodsId.setText("1045210");
 		
-		inputModelID=new JTextField();
-		inputModelID.setBounds(40, 290, 90, 20);
-		inputModelID.setHorizontalAlignment(JTextField.CENTER);
-		inputModelID.setText("1015922");
+		inputSkuId=new JTextField();
+		inputSkuId.setBounds(40, 290, 90, 20);
+		inputSkuId.setHorizontalAlignment(JTextField.CENTER);
+		inputSkuId.setText("1040095");
 		
 		labelStock=new JLabel();
 		labelStock.setText("库存");
 		labelStock.setHorizontalAlignment(JLabel.CENTER);
 		labelStock.setFont(new Font("微软雅黑",Font.PLAIN,12));
 		labelStock.setBounds(40, 310, 90, 20);
+
+		btnAddAddress=new JButton();
+		btnAddAddress.setBounds(40, 350, 90, 25);
+		btnAddAddress.setFont(new Font("微软雅黑",Font.PLAIN,14));
+		btnAddAddress.setText("添加地址");
 		
 		JPanel panel=new JPanel();		
 		panel.setLayout(null);
@@ -151,10 +156,11 @@ public class Mobile extends JFrame{
 		panel.add(labelBuy,null);
 		panel.add(btnSave,null);
 		panel.add(labelSave,null);
-		panel.add(inputProdID,null);
-		panel.add(inputModelID,null);
+		panel.add(inputGoodsId,null);
+		panel.add(inputSkuId,null);
 		panel.add(labelStock,null);
-	
+		panel.add(btnAddAddress,null);
+
 		tableModel=new DefaultTableModel();
 		columnVector=new Vector();
 		columnVector.add("序号");
@@ -184,7 +190,16 @@ public class Mobile extends JFrame{
 	
 		btnLoad.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(final MouseEvent arg0){
-				if(btnLoadClicked())btnLoad.setEnabled(false);
+				if(! loadAccount()){
+					JOptionPane.showMessageDialog(new JPanel(), "错误", "导入帐号异常",JOptionPane.WARNING_MESSAGE);
+				}
+				btnSendMsg.setEnabled(true);
+				btnLogin.setEnabled(true);
+				btnBuy.setEnabled(true);
+				btnAddAddress.setEnabled(true);
+				labelSendMsg.setText("0/0");
+				labelLogin.setText("0/0");
+				labelBuy.setText("0/0");
 			}
 		});
         btnSendMsg.addMouseListener(new MouseAdapter() {
@@ -194,7 +209,7 @@ public class Mobile extends JFrame{
                 int maxReqNum = Integer.valueOf(inputMaxSendMsgReq.getText().trim());
                 reqManager.startSendMsg(maxReqNum);
                 btnSendMsg.setEnabled(false);
-                inputMaxLoginReq.setEditable(false);
+                inputMaxSendMsgReq.setEditable(false);
 
             }
         });
@@ -203,19 +218,23 @@ public class Mobile extends JFrame{
                 int maxReqNum = Integer.valueOf(inputMaxLoginReq.getText().trim());
 				reqManager.startLogin(maxReqNum);
 				btnLogin.setEnabled(false);
-                inputMaxLoginReq.setEditable(false);
+				inputMaxLoginReq.setEditable(false);
 			}
 		});
 		btnBuy.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(final MouseEvent arg0){
                 int maxReqNum = Integer.valueOf(inputMaxBuyReq.getText().trim());
-                int prodID = Integer.valueOf(inputProdID.getText().trim());
-                int modelID = Integer.valueOf(inputModelID.getText().trim());
-                reqManager.startBuy(maxReqNum, prodID, modelID);
-                btnBuy.setEnabled(false);
-                inputMaxBuyReq.setEditable(false);
-
+                reqManager.startBuy(maxReqNum, inputGoodsId.getText().trim(), inputSkuId.getText().trim());
+				btnBuy.setEnabled(false);
+				inputMaxBuyReq.setEditable(false);
             }
+		});
+		btnAddAddress.addMouseListener(new MouseAdapter(){
+			public void mouseClicked(final MouseEvent arg0){
+				int maxReqNum = Integer.valueOf(inputMaxBuyReq.getText().trim());
+				reqManager.startAddAddress(maxReqNum);
+				btnAddAddress.setEnabled(false);
+			}
 		});
         inputMaxSendMsgReq.addFocusListener(new FocusListener(){
             @Override
@@ -294,7 +313,7 @@ public class Mobile extends JFrame{
         String state = String.valueOf(curSucNum) + "/" + String.valueOf(curReqNum);
         labelBuy.setText(state);
     }
-	private boolean btnLoadClicked(){
+	private boolean loadAccount(){
 		JFileChooser fileChooser=new JFileChooser(localPath);
 		FileNameExtensionFilter filter=new FileNameExtensionFilter("文本文件","txt");
 		fileChooser.setFileFilter(filter);
@@ -302,21 +321,41 @@ public class Mobile extends JFrame{
 		fileChooser.setFont(new Font("宋体",Font.PLAIN,20));
 		int returnVal=fileChooser.showOpenDialog(null);
 		if(returnVal == JFileChooser.CANCEL_OPTION){ //APPROVE_OPTION 
-            return false;  
+            return true;
         }  
 		String fileName=fileChooser.getSelectedFile().getAbsolutePath();	
 		selectedFileName=fileName;
-		if(fileName!=""){
-			try {				
-				loadAccountInfo(fileName);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				System.out.println("error");
-				e.printStackTrace();
-			}
+		if (fileName.equals("")){
+			return true;
 		}
-		
-		if(this.reqManager.iphonexVec.size() == 0)return false;
+		try {
+			File srcFile = new File(fileName);
+			FileReader ins;
+			ins = new FileReader(srcFile);
+			BufferedReader readBuf = new BufferedReader(ins);
+			String line;
+			reqManager = new ReqManager(this);
+			int id = 0;
+			while ((line = readBuf.readLine()) != null) {
+				line = line.trim();
+				if (line.equals("") || line.equals(null)) continue;
+				String[] elementArr = line.split(",");
+				int elementLength = elementArr.length;
+				//格式可以是帐号,密文
+				//也可以是帐号,密文,地址信息
+				if (elementLength != 2 && elementLength != 8) continue;
+//				TestBuy testBuy = new TestBuy(reqManager, id, elementArr);
+				AppBuy appBuy = new AppBuy(reqManager, id, elementArr);
+				reqManager.iphonexVec.add(appBuy);
+				id += 1;
+			}
+			readBuf.close();
+		}catch (IOException e){
+			System.out.println("加载帐号错误，请检查格式");
+			return false;
+		}
+
+		if(this.reqManager.iphonexVec.size() == 0)return true;
         Vector dataVector = new Vector();
         for(int i = 0; i<this.reqManager.iphonexVec.size(); i++){
 			Vector rowVector=new Vector();
@@ -376,31 +415,6 @@ public class Mobile extends JFrame{
 		}
 		
 		
-	}
-	private void loadAccountInfo(String filename) throws IOException{
-	    try {
-            File srcFile = new File(filename);
-            FileReader ins;
-            ins = new FileReader(srcFile);
-            BufferedReader readBuf = new BufferedReader(ins);
-            String s;
-            reqManager = new ReqManager(this);
-            int id = 0;
-            while ((s = readBuf.readLine()) != null) {
-                s = s.trim();
-                if (s.equals("") || s.equals(null) || s.length() < 10) continue;
-                int pos = s.indexOf("-");
-                System.out.println(s);
-                String cellNum = s.substring(0, pos);
-                String cellNumEnc = s.substring(pos + 4);
-                IPhoneX iPhoneX = new IPhoneX(reqManager, id, cellNum, cellNumEnc);
-                reqManager.iphonexVec.add(iPhoneX);
-                id += 1;
-            }
-            readBuf.close();
-        }catch (Exception e){
-	        System.out.println("加载帐号错误，请检查格式");
-        }
 	}
 
 }
