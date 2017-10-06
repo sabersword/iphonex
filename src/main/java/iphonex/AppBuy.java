@@ -40,7 +40,6 @@ public class AppBuy {
 
     private OkHttpClient okHttpClient;
     private final String goodsUrl = "http://touch.10086.cn/goods/200_200_"+goodsId+"_"+skuId+".html";
-    private final String clientPageUrl = "https://app.10086.cn/leadeon-cmcc-static/v2.0/pages/clientHome/clientPage.html";
 
     public AppBuy(String cellNum, String cellNumEnc){
         this.cellNum = cellNum;
@@ -159,16 +158,6 @@ public class AppBuy {
 
     }
 
-    public void clientPage(){
-        Request request = new Request.Builder().url(clientPageUrl).build();
-        Call call = okHttpClient.newCall(request);
-        try{
-            Response response = call.execute();
-        }catch (IOException e){
-
-        }
-    }
-
     public void getsaleAdver(){
         String url = "https://app.10086.cn/biz-orange/DN/homeSale/getsaleAdver";
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded; charset=UTF-8");
@@ -178,7 +167,6 @@ public class AppBuy {
                             .url(url)
                             .post(requestBody)
                             .addHeader("Cookie", getReqCookie())
-                            .addHeader("Referer", clientPageUrl)
                             .build();
         Call call = okHttpClient.newCall(request);
         try{
@@ -389,7 +377,6 @@ public class AppBuy {
 
         appBuy.sendMsg();
         appBuy.login();
-        appBuy.clientPage();
         appBuy.getsaleAdver();
         appBuy.getAppSSo();
         appBuy.getGoods();
