@@ -59,8 +59,8 @@ public class InternetBuy {
         phpSessid = Utils.getMd5(String.valueOf(System.currentTimeMillis())).substring(0, 26);
         this.account = account;
         this.password = password;
-        this.cookieMap = new HashMap<String, String>();
-        cookieMap.put("PHPSESSID", phpSessid);
+//        this.cookieMap = new HashMap<String, String>();
+//        cookieMap.put("PHPSESSID", phpSessid);
         
     }
 
@@ -187,16 +187,15 @@ public class InternetBuy {
                 .add("sku[0][GoodsId]", goodsId)
                 .add("sku[0][Num]", "1")
                 .add("sku[0][Channel]", "1")
-                .add("sku[0][ProvinceId]", "200")
-                .add("sku[0][CityId]", "200")
+                .add("sku[0][ProvinceId]", "100")
+                .add("sku[0][CityId]", "100")
                 .build();
         okhttp3.Request.Builder builder = new Request.Builder()
 //                .addHeader("Cookie", "PHPSESSID=" + phpSessid)
 //                .addHeader("Cookie", getReqCookie())
                 .addHeader("Cookie", "CmLocation=100|100")
                 .addHeader("Referer", "http://shop.10086.cn/goods/100_100_1045210_1040095.html?WT.ac=res_search_042_100_6cff38aa78a64031ad03db3993ff8103_1045210")
-                .addHeader("User-Agent",
-                        "Mozilla/5.0 (Linux; Android 5.1; OPPO A37m Build/LMY47I; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/43.0.2357.121 Mobile Safari/537.36 leadeon/4.1.0")
+                .addHeader("User-Agent", "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/7.0)")
                 .url("http://shop.10086.cn/ajax/buy/buy.json").post(formBody);
         Request request = builder.build();
         Call call = client.newCall(request);
@@ -206,8 +205,7 @@ public class InternetBuy {
                 System.out.println(response.headers("set-cookie"));
                 String str = response.body().string();
                 System.out.println(str);
-                if (str.contains("2"))
-                    buy();
+                getLoginfo();
             }
             @Override
             public void onFailure(Call call, IOException e) {
@@ -268,7 +266,9 @@ public class InternetBuy {
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
+                System.out.println("-----getArtifact----");
                 System.out.println(response.headers("set-cookie"));
+                System.out.println(response.body().string());
                 getLgToken();
             }
             @Override
