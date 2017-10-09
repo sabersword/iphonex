@@ -3,96 +3,175 @@ package iphonex;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
 import javax.imageio.ImageIO;
+import javax.net.ssl.*;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Cookie;
-import okhttp3.CookieJar;
-import okhttp3.FormBody;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.OkHttpClient.Builder;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 
-public class InternetBuy {
+public class InternetBuy extends IPhoneX{
 
     private OkHttpClient client;
+    private OkHttpClient okHttpClient;
     private HashMap<String, String> cookieMap;
-    private String codePath = "e:/img/1.jpg";
-    private String account;
-    private String password;
+    private String cartCode;
+    private String addressId;
+    private String TransactionID;
+    private String uid;
+    private String merchantId;
+    private String targetChannelID;
+    private String codePath = "1.jpg";
     private String captcha;
     private String artifact;
-    private String backUrl = "https://login.10086.cn/login.html?channelID=12003&backUrl=http://shop.10086.cn/i/";
-    private String phpSessid;
-    private String sku = "1040095";
+    private final String backUrl = "http%3A%2F%2Fshop.10086.cn%2Fmall_200_200.html%3Fforcelogin%3D1";
+    private final String refererUrl = "https://login.10086.cn/html/login/login.html?channelID=12002&backUrl=" + backUrl;
+    private final String userAgent = "Mozilla/5.0 (Linux; Android 6.0.1; SM-C7000 Build/MMB29M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/55.0.2883.91 Mobile Safari/537.36 leadeon/4.0.0";
+    private String skuId = "1040095";
     private String goodsId = "1045210";
-    private String uid;
-    
-    public InternetBuy(String account, String password) {
-        Builder builder = new OkHttpClient.Builder();
-        builder.cookieJar(new CookieJar() {
-            private List<Cookie> cookies = new ArrayList<Cookie>();
-            
+    private final String goodsUrl = "http://shop.10086.cn/goods/200_200_"+ goodsId+"_"+skuId+".html";
+    private final HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
+
+
+
+    public InternetBuy(ReqManager reqManager, int id, String[] elementArr){
+        super(reqManager, id, elementArr);
+        OkHttpClient.Builder mBuilder = new OkHttpClient.Builder();
+        mBuilder.sslSocketFactory(createSSLSocketFactory());
+        mBuilder.hostnameVerifier(new InternetBuy.TrustAllHostnameVerifier());
+        client = mBuilder.build();
+        cookieMap = new HashMap<>();
+        String phpsessid = String.valueOf(id) + Utils.getMd5(String.valueOf(System.currentTimeMillis()));
+        phpsessid = phpsessid.substring(0, 26);
+//        System.out.println("phpsessid:" + phpsessid);
+//        cookieMap.put("PHPSESSID", phpsessid);
+        mBuilder.cookieJar(new CookieJar() {
+
             @Override
             public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
-                for (Cookie cookie : cookies) {
-                    this.cookies.add(cookie);
+                cookieStore.put(url.host(), cookies);
+                for(Cookie cookie:cookies){
+                    String str = cookie.toString();
+                    String[] arr = str.split(";");
+                    System.out.println("str:" + str);
+
+                    for (String item: arr) {
+                        String[] itemArr = item.split("=");
+                        if(itemArr[0].length() == 2) {
+                            cookieMap.put(itemArr[0], itemArr[1]);
+                        }
+                    }
                 }
             }
+
             @Override
             public List<Cookie> loadForRequest(HttpUrl url) {
-//                okhttp3.Cookie.Builder builder = new Cookie.Builder();
-//                Cookie phpSessidCookie = builder.name("PHPSESSID").value(phpSessid).domain("shop.10086.cn").build();
-//                cookies.add(phpSessidCookie);
-                return cookies;
+                List<Cookie> cookies = cookieStore.get(url.host());
+                return cookies != null ? cookies : new ArrayList<Cookie>();
             }
         });
-        client = builder.build();
-        phpSessid = Utils.getMd5(String.valueOf(System.currentTimeMillis())).substring(0, 26);
-        this.account = account;
-        this.password = password;
-//        this.cookieMap = new HashMap<String, String>();
-//        cookieMap.put("PHPSESSID", phpSessid);
-        
+        okHttpClient = mBuilder.build();
     }
 
-    public void getLogin() {
+    /**
+     * 默认信任所有的证书
+     * TODO 最好加上证书认证，主流App都有自己的证书
+     *
+     * @return
+     */
+    private static SSLSocketFactory createSSLSocketFactory() {
+
+        SSLSocketFactory sSLSocketFactory = null;
+
+        try {
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, new TrustManager[]{new InternetBuy.TrustAllManager()},
+                    new SecureRandom());
+            sSLSocketFactory = sc.getSocketFactory();
+        } catch (Exception e) {
+        }
+
+        return sSLSocketFactory;
+    }
+
+    private static class TrustAllManager implements X509TrustManager {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException {
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType)
+
+                throws CertificateException {
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+    }
+
+    private static class TrustAllHostnameVerifier implements HostnameVerifier {
+        @Override
+        public boolean verify(String hostname, SSLSession session) {
+            return true;
+        }
+    }
+    public void ssocheck(){
+        String url = "https://login.10086.cn/SSOCheck.action?channelID=12002&backUrl=" + backUrl;
         Request request = new Request.Builder()
-                .url("https://login.10086.cn/login.html?channelID=12003&backUrl=http://shop.10086.cn/i/")
+                .url(url)
                 .build();
         Call call= client.newCall(request);
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                System.out.println(response.headers("set-cookie"));
-                String str = response.body().string();
-                System.out.println(str);
+                addRspCookie(response.headers("Set-Cookie"));
+                getCheckArtifact();
+            }
+            @Override
+            public void onFailure(Call call, IOException e) {
+                System.out.println("loginPage: " + e.toString());
+            }
+        });
+    }
+    public void getLogin() {
+        Request request = new Request.Builder()
+                .url(refererUrl)
+                .build();
+        Call call= client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
                 getCaptcha();
             }
             @Override
             public void onFailure(Call call, IOException e) {
-                System.out.println("getLogin failed");
             }
         });
     }
     
     public void getCaptcha() {
+        String url = "https://login.10086.cn/captchazh.htm?type=12&timestamp=" + String.valueOf(System.currentTimeMillis());
         Request request = new Request.Builder()
-                .url("https://login.10086.cn/captchazh.htm?type=12")
+                .url(url)
+                .addHeader("Referer", refererUrl)
+                .addHeader("Cookie", getReqCookie())
                 .build();
         Call call= client.newCall(request);
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                System.out.println(response.headers("set-cookie"));
+                addRspCookie(response.headers("Set-Cookie"));
                 BufferedImage bi = ImageIO.read(response.body().byteStream());
                 ImageIO.write(bi, "png", new File(codePath));
                 verifyCaptcha();
@@ -110,15 +189,20 @@ public class InternetBuy {
         this.captcha = scanner.nextLine();
         Request request = new Request.Builder()
                 .url("https://login.10086.cn/verifyCaptcha?inputCode=" + captcha)
+                .addHeader("Cookie", getReqCookie())
+                .addHeader("Referer", refererUrl)
                 .build();
         Call call= client.newCall(request);
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                System.out.println(response.headers("set-cookie"));
-                String str = response.body().string();
-                System.out.println(str);
-                login();
+                addRspCookie(response.headers("Set-Cookie"));
+                String result = response.body().string();
+                if(result.contains("resultCode\":\"0\"")) {
+                    login();
+                }else{
+                    System.out.println("verify:" + result);
+                }
             }
             @Override
             public void onFailure(Call call, IOException e) {
@@ -128,93 +212,266 @@ public class InternetBuy {
     }
     
     public void login() {
+        String account = "";
+        String password = "";
+        try {
+            account = URLEncoder.encode(cellNum, "utf-8");
+            password = URLEncoder.encode(cellNumEnc, "utf-8");
+        }catch (UnsupportedEncodingException e){
+
+        }
         Request request = new Request.Builder()
-                .url("https://login.10086.cn/login.htm?accountType=02&account=280139726%40qq.com&password=godigmh123456&pwdType=0321&smsPwd=&backUrl=http%3A%2F%2Fshop.10086.cn%2Fi%2F&rememberMe=0&channelID=12003&protocol=https%3A&timestamp=" + String.valueOf(System.currentTimeMillis()) + "&inputCode=" + this.captcha)
-                .addHeader("Referer", backUrl)
+                .url("https://login.10086.cn/login.htm?accountType=02&account=" + account +"&password=" +password+"&pwdType=03&smsPwd=&backUrl="+backUrl+"&rememberMe=0&channelID=12002&protocol=https%3A&timestamp=" + String.valueOf(System.currentTimeMillis()) + "&inputCode=" + this.captcha)
+                .addHeader("Cookie", getReqCookie())
+                .addHeader("Referer", refererUrl)
                 .build();
         Call call= client.newCall(request);
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                System.out.println(response.headers("set-cookie"));
-                String str = response.body().string();
-                System.out.println(str);
-//                addRspCookie(response.headers("Set-Cookie"));
-                artifact = Utils.getValue(str,"artifact\":\"", "\"");
-                uid = Utils.getValue(str,"uid\":\"", "\"");
+                addRspCookie(response.headers("Set-Cookie"));
+                String result = response.body().string();
+                artifact = Utils.getValue(result,"artifact\":\"", "\"");
+                uid = Utils.getValue(result,"uid\":\"", "\"");
                 System.out.println("artifact=" + artifact + ",uid=" + uid);
                 getArtifact();
             }
             @Override
             public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-                System.out.println("login failed");
             }
         });
     }
     
     public void getArtifact() {
+//        String url = "http://shop.10086.cn/sso/getartifact.php?&backUrl=" + backUrl;
+        String url = "http://search.10086.cn/shop/acceptArtifact?backUrl=http%3A%2F%2Fsearch.10086.cn%2Fshop%2Flist%3Fkey%3DiPhone%2B8%26cityId%3D200%26provinceId%3D200%26nh%3D1&artifact=" + artifact;
         Request request = new Request.Builder()
-                .url("http://shop.10086.cn/i/v1/auth/getArtifact?backUrl=http%3A%2F%2Fshop.10086.cn%2Fi%2F&artifact=" + artifact)
-//                .addHeader("Cookie", "PHPSESSID=" + phpSessid)
-//                .addHeader("Cookie", getReqCookie())
-                .addHeader("User-Agent",
-                        "Mozilla/5.0 (Linux; Android 5.1; OPPO A37m Build/LMY47I; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/43.0.2357.121 Mobile Safari/537.36 leadeon/4.1.0")
-                .addHeader("Cookie", "CmLocation=100|100;itemFrom=res_search_042_100_2aaf56e0811c42b9ba1902a74472cf46_1045210")
+                .url(url)
+                .addHeader("Cookie", getReqCookie())
+                .addHeader("User-Agent",userAgent)
+                .build();
+        Call call= okHttpClient.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                addRspCookie(response.headers("Set-Cookie"));
+                System.out.println("cookie1:" + getReqCookie());
+//                getGoods();
+                userinfo();
+            }
+            @Override
+            public void onFailure(Call call, IOException e) {
+            }
+        });
+    }
+    public void getCheckArtifact() {
+        String url = "http://shop.10086.cn/sso/getartifact.php?artifact=-1&backUrl=" + backUrl;
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Cookie", getReqCookie())
+                .addHeader("User-Agent",userAgent)
                 .build();
         Call call= client.newCall(request);
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                System.out.println("code=" + response.code());
-                System.out.println("-----getArtifact----");
-                System.out.println(response.headers("set-cookie"));
-                buy();
+                addRspCookie(response.headers("Set-Cookie"));
+                System.out.println("cookie1:" + getReqCookie());
+                getLogin();
             }
             @Override
             public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-                System.out.println("getArtifact failed");
             }
         });
     }
-    
-    public void buy() {
-        FormBody formBody = new FormBody.Builder()
-                .add("sku[0][ItemFrom]", "res_search_042_100_6cff38aa78a64031ad03db3993ff8103_" + goodsId)
-                .add("sku[0][GoodsType]", "70000")
-                .add("sku[0][ModelId]", sku)
-                .add("sku[0][GoodsId]", goodsId)
-                .add("sku[0][Num]", "1")
-                .add("sku[0][Channel]", "1")
-                .add("sku[0][ProvinceId]", "100")
-                .add("sku[0][CityId]", "100")
+    public void getGoods(){
+        System.out.println("goods cookie:" + getReqCookie());
+
+        Request request = new Request.Builder()
+                .url(goodsUrl)
+                .addHeader("Cookie", getReqCookie())
                 .build();
-        okhttp3.Request.Builder builder = new Request.Builder()
-//                .addHeader("Cookie", "PHPSESSID=" + phpSessid)
-//                .addHeader("Cookie", getReqCookie())
-                .addHeader("Cookie", "CmLocation=100|100")
-                .addHeader("Referer", "http://shop.10086.cn/goods/100_100_1045210_1040095.html?WT.ac=res_search_042_100_6cff38aa78a64031ad03db3993ff8103_1045210")
-                .addHeader("User-Agent", "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/7.0)")
-                .url("http://shop.10086.cn/ajax/buy/buy.json").post(formBody);
-        Request request = builder.build();
         Call call = client.newCall(request);
         call.enqueue(new Callback() {
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                System.out.println(response.headers("set-cookie"));
-                String str = response.body().string();
-                System.out.println(str);
-                getLoginfo();
+            public void onFailure(Call call, IOException e) {
+//                onBuyFail(cellNum + " " + e.toString());
             }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String result = response.body().string();
+                merchantId = Utils.getValue(result, "merchant_id:\"", "\"");
+                System.out.println("merchantId:"+merchantId);
+                getstock();
+            }
+        });
+    }
+    public void getstock(){
+        String url = "http://shop.10086.cn/ajax/detail/getstock.json?goods_id="+goodsId+"&merchant_id="+merchantId+"&sale_type=1&sku_id="+skuId;
+        System.out.println("cookie:" + getReqCookie());
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Referer", goodsUrl)
+                .addHeader("Cookie", getReqCookie())
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                System.out.println("buy failed");
+//                onBuyFail(cellNum + " " + e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+//                addRspCookie(response.headers("Set-Cookie"));
+                String result = response.body().string();
+                System.out.println("getstock:" + result);
+                cookieStore.get("shop.10086.cn");
+                userinfo();
+            }
+        });
+    }
+    public void userinfo(){
+        String url = "http://shop.10086.cn/ajax/user/userinfo.json?province_id=200&city_id=200";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Referer", goodsUrl)
+                .addHeader("Cookie", getReqCookie())
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+//                onBuyFail(cellNum + " " + e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                addRspCookie(response.headers("Set-Cookie"));
+                String result = response.body().string();
+                System.out.println("userinfo:" + result);
+                sosocheck2();
+            }
+        });
+    }
+    private void sosocheck2(){
+        String url = "https://login.10086.cn/SSOCheck.action?channelID=12002&backUrl=http%3A%2F%2Fshop.10086.cn%2Fsso%2Fminilogincallback.php";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Referer", goodsUrl)
+                .addHeader("Cookie", getReqCookie())
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+//                onBuyFail(cellNum + " " + e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                addRspCookie(response.headers("Set-Cookie"));
+                String result = response.body().string();
+                System.out.println("userinfo:" + result);
+                buyBuy();
             }
         });
 
+
+
     }
-    
+    public void buyBuy(){
+        String url = "http://shop.10086.cn/ajax/buy/buy.json";
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded; charset=UTF-8");
+        String data = "sku%5B0%5D%5BModelId%5D="+skuId+"&sku%5B0%5D%5BGoodsId%5D="+goodsId+"&sku%5B0%5D%5BNum%5D=1&sku%5B0%5D%5BGoodsType%5D=70000&sku%5B0%5D%5BChannel%5D=1&sku%5B0%5D%5BProvinceId%5D=200&sku%5B0%5D%5BCityId%5D=200";
+        RequestBody requestBody = RequestBody.create(mediaType, data);
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Referer", goodsUrl)
+                .addHeader("Cookie", getReqCookie())
+                .addHeader("User-Agent",userAgent)
+                .post(requestBody)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+//                onBuyFail(cellNum + " " + e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                addRspCookie(response.headers("Set-Cookie"));
+                String result = response.body().string();
+                cartCode = Utils.getValue(result, "cart_code=", "\"");
+                System.out.println("cart_code:" + cartCode);
+                checkOrder();
+            }
+        });
+    }
+    public void checkOrder(){
+        String url = "http://shop.10086.cn/order/checkorder.php?";
+        url += "cart_code=" + cartCode;
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Referer", goodsUrl)
+                .addHeader("Cookie", getReqCookie())
+                .addHeader("User-Agent",userAgent)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                onBuyFail(cellNum + " " + e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                addRspCookie(response.headers("Set-Cookie"));
+                String result = response.body().string();
+                addressId = Utils.getValue(result, "address_id\" value=\"", "\"");
+                System.out.println("addressId:" + addressId);
+                submitOrder();
+            }
+        });
+    }
+    public void submitOrder(){
+        String url = "http://shop.10086.cn/ajax/submitorder/addorder.json";
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded; charset=UTF-8");
+        String data = "address_id=" + addressId;
+        data += "&invoice_id=personal&pay_type=1&coupon_type=&eticket_number_mall=";
+        data += "&cart_code=" + cartCode;
+        data += "&ticket_no=";
+        data += "&cart_code=" + cartCode;
+        RequestBody requestBody = RequestBody.create(mediaType, data);
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Referer", "http://shop.10086.cn/order/checkorder.php?cart_code=" + cartCode)
+                .addHeader("Cookie", getReqCookie())
+                .addHeader("User-Agent",userAgent)
+                .post(requestBody)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+//                onBuyFail(cellNum + " " + e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                addRspCookie(response.headers("Set-Cookie"));
+                String result = response.body().string();
+                System.out.println("submit order: " + result );
+                if (result.contains("topay")){
+//                    onBuySuccess(cellNum);
+                }else{
+//                    onBuyFail(cellNum + "" + result);
+                }
+            }
+        });
+    }
     public void addRspCookie(List<String> cookies){
         if(cookies.equals(null)){
             return;
@@ -239,67 +496,13 @@ public class InternetBuy {
         return cookie;
 
     }
-    
-    public void getPhpSessid() {
-        Request request = new Request.Builder()
-                .url("http://shop.10086.cn/service/excanvas.min.js")
-                .build();
-        Call call= client.newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                System.out.println(response.headers("set-cookie"));
-                getLoginfo();
-            }
-            @Override
-            public void onFailure(Call call, IOException e) {
-                System.out.println("getPhpSessid failed");
-            }
-        });
-    }
-    
-    public void getLoginfo() {
-        Request request = new Request.Builder()
-                .url("http://shop.10086.cn/i/v1/auth/loginfo?_=" + String.valueOf(System.currentTimeMillis()))
-                .build();
-        Call call= client.newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                System.out.println("-----getArtifact----");
-                System.out.println(response.headers("set-cookie"));
-                System.out.println(response.body().string());
-                getLgToken();
-            }
-            @Override
-            public void onFailure(Call call, IOException e) {
-                System.out.println("getLoginfo failed");
-            }
-        });
-    }
-    
-    public void getLgToken() {
-        Request request = new Request.Builder()
-                .url("https://login.10086.cn/genqr.htm")
-                .build();
-        Call call= client.newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                System.out.println(response.headers("set-cookie"));
-                getCaptcha();
-            }
-            @Override
-            public void onFailure(Call call, IOException e) {
-                System.out.println("getLgToken failed");
-            }
-        });
-    }
-    
+
     public static void main(String[] args) throws Exception {
-        InternetBuy buy = new InternetBuy("280139726@qq.com", "godigmh123456");
-        buy.getPhpSessid();
-        
+        ReqManager reqManager = new ReqManager(new Mobile());
+        String[] elementArr = {"280139726@qq.com", "godigmh123456"};
+        InternetBuy internetBuy = new InternetBuy(reqManager,0,elementArr);
+        internetBuy.ssocheck();
+
     }
 
 }
