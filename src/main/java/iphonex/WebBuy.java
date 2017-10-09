@@ -84,63 +84,7 @@ public class WebBuy {
             return true;
         }
     }
-    public  boolean sendMsg(){
-        String url="https://clientaccess.10086.cn/biz-orange/LN/uamrandcode/sendMsgLogin";
-        MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-        String data = "{\"ak\":\"F4AA34B89513F0D087CA0EF11A3277469DC74905\",\"cid\":\"ZQ7NGnFe+2Ob+ELjX6nA80oNw9raJFK96ckDGM/SJqdKa110jeool++QXR4R/VmoUbYy1yY6S0Tv7LQOgp8OxK/6BUQ0L7PEE0y+VwFEAMA=\",\"city\":\"0755\",\"ctid\":\"ZQ7NGnFe+2Ob+ELjX6nA80oNw9raJFK96ckDGM/SJqdKa110jeool++QXR4R/VmoUbYy1yY6S0Tv7LQOgp8OxK/6BUQ0L7PEE0y+VwFEAMA=\",\"cv\":\"4.0.0\",\"en\":\"0\",\"imei\":\"358811074939040\",\"nt\":\"3\",\"prov\":\"200\",\"reqBody\":{\"cellNum\":\"CELL_NUM\"},\"sb\":\"samsung\",\"sn\":\"SM-C7000\",\"sp\":\"1080x1920\",\"st\":\"1\",\"sv\":\"6.0.1\",\"t\":\"\",\"tel\":\"99999999999\",\"xc\":\"A0001\",\"xk\":\"8134206949ee8bbc89e534902056abc3b91c333ac8f5eb629e36cb0a3b37825736bf236e\"}";
-        data = data.replace("CELL_NUM", this.cellNum);
-        String xs = url + "_" + data + "_Leadeon/SecurityOrganization";
-        xs = getMd5(xs);
-        System.out.println("xs:" + xs);
-        RequestBody body = RequestBody.create(JSON,data);
-        Request request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .addHeader("xs", xs)
 
-                .build();
-        Call call = okHttpClient.newCall(request);
-        try {
-            Response response = call.execute();
-            String result = response.body().string();
-            System.out.println(result);
-            if (result.contains("\"retDesc\":\"SUCCESS\"")){
-                return true;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-    public void login(){
-        System.out.print("输入验证码：");
-        Scanner scanner = new Scanner(System.in);
-        verifyCode = scanner.nextLine();
-        String url = "https://clientaccess.10086.cn/biz-orange/LN/uamrandcodelogin/login";
-        MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
-        String data = "{\"ak\":\"F4AA34B89513F0D087CA0EF11A3277469DC74905\",\"cid\":\"ZQ7NGnFe+2Ob+ELjX6nA80oNw9raJFK96ckDGM/SJqdKa110jeool++QXR4R/VmoUbYy1yY6S0Tv7LQOgp8OxK/6BUQ0L7PEE0y+VwFEAMA=\",\"city\":\"0755\",\"ctid\":\"ZQ7NGnFe+2Ob+ELjX6nA80oNw9raJFK96ckDGM/SJqdKa110jeool++QXR4R/VmoUbYy1yY6S0Tv7LQOgp8OxK/6BUQ0L7PEE0y+VwFEAMA=\",\"cv\":\"4.0.0\",\"en\":\"0\",\"imei\":\"358811074939040\",\"nt\":\"3\",\"prov\":\"200\",\"reqBody\":{\"cellNum\":\"CELL_NUM\",\"imei\":\"358811074939040\",\"sendSmsFlag\":\"1\",\"verifyCode\":\"VERIFY_CODE\"},\"sb\":\"samsung\",\"sn\":\"SM-C7000\",\"sp\":\"1080x1920\",\"st\":\"1\",\"sv\":\"6.0.1\",\"t\":\"\",\"tel\":\"99999999999\",\"xc\":\"A2061\",\"xk\":\"8134206949ee8bbc89e534902056abc3b91c333ac8f5eb629e36cb0a3b37825736bf236e\"}";
-        data = data.replace("CELL_NUM", this.cellNumEnc).replace("VERIFY_CODE", this.verifyCode);
-        System.out.println(data);
-        String xs = url + "_" + data + "_Leadeon/SecurityOrganization";
-        xs = getMd5(xs);
-        System.out.println("xs:" + xs);
-        RequestBody body = RequestBody.create(mediaType, data);
-        Request request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .addHeader("xs", xs)
-                .build();
-        Call call = okHttpClient.newCall(request);
-        try {
-            Response response = call.execute();
-            System.out.println(response.body().string());
-            addRspCookie(response.headers("Set-Cookie"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
     public void getGoods(){
         Request request = new Request.Builder().url(goodsUrl).build();
         Call call = okHttpClient.newCall(request);
@@ -265,28 +209,6 @@ public class WebBuy {
         }
     }
 
-    public  static String getMd5(String plainText) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            md.update(plainText.getBytes());
-            byte b[] = md.digest();
-            int i;
-            StringBuffer buf = new StringBuffer("");
-            for (int offset = 0; offset < b.length; offset++) {
-                i = b[offset];
-                if (i < 0)
-                    i += 256;
-                if (i < 16)
-                    buf.append("0");
-                buf.append(Integer.toHexString(i));
-            }
-            return buf.toString();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-    }
     public void getArtifact(){
         String url = "http://touch.10086.cn/sso/getartifact.php?backurl=" + loginTouchUrl;
         url += "&artifact=" + artifact;
@@ -482,8 +404,8 @@ public class WebBuy {
         webBuy.getGoodsLogin();
         webBuy.getstock();
         webBuy.userinfo();
-        webBuy.buy();
-        webBuy.checkOrder();
-        webBuy.submitOrder();
+//        webBuy.buy();
+//        webBuy.checkOrder();
+//        webBuy.submitOrder();
     }
 }

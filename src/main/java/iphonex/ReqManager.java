@@ -34,13 +34,15 @@ public class ReqManager {
 			if (state.equals("发送验证码成功")){
 				curSendMsgSucNum ++;
 				mobile.updateSendMsgState(curSendMsgSucNum, curSendMsgReqNum);
+			}else {
+				mobile.addLog(result);
 			}
 			mobile.updateTableState(id, state);
 			curSendMsgFinishNum ++;
 		}
 		int diff = maxParaSendMsgReqNum - (curSendMsgReqNum - curSendMsgFinishNum);
 		while(curSendMsgReqNum < iphonexVec.size() && diff>0){
-			this.iphonexVec.get(curSendMsgReqNum).sendMsg();
+			this.iphonexVec.get(curSendMsgReqNum).onSendMsg();
 			curSendMsgReqNum ++;
 			diff--;
 		}
@@ -55,34 +57,68 @@ public class ReqManager {
 			if (state.equals("登录成功")){
 				curLoginSucNum ++;
 				mobile.updateLoginState(curLoginSucNum, curLoginReqNum);
+			}else {
+				mobile.addLog(result);
 			}
 			mobile.updateTableState(id, state);
 			curLoginFinishNum ++;
 		}
 		int diff = maxParaLoginReqNum - (curLoginReqNum - curLoginFinishNum);
 		while(curLoginReqNum < iphonexVec.size() && diff > 0){
-			this.iphonexVec.get(curLoginReqNum).login();
+			this.iphonexVec.get(curLoginReqNum).onLogin();
 			curLoginReqNum ++;
 			diff --;
 		}
 
 	}
-	public void startBuy(int maxParaReqNum, int prodID, int modelID){
+	public void startBuy(int maxParaReqNum, String goodsId, String skuId){
 		this.maxParaBuyReqNum = maxParaReqNum;
-		buy(-1, "", "");
+		buy(-1, "", "", goodsId, skuId);
 	}
-	public synchronized void buy(int id, String result, String state){
+
+	public synchronized void buy(int id, String result, String state, String goodsId, String skuId){
 		if(id >= 0){
 			if (state.equals("购买成功")){
 				curBuySucNum ++;
 				mobile.updateBuyState(curBuySucNum, curBuyReqNum);
+				mobile.addResult(result);
+			}else {
+				mobile.addLog(result);
 			}
 			mobile.updateTableState(id, state);
 			curBuyFinishNum ++;
 		}
 		int diff = maxParaBuyReqNum - (curBuyReqNum - curBuyFinishNum);
 		while(curBuyReqNum < iphonexVec.size() && diff > 0){
-			this.iphonexVec.get(curBuyReqNum).buy();
+			this.iphonexVec.get(curBuyReqNum).onBuy(goodsId, skuId);
+			curBuyReqNum ++;
+			diff --;
+		}
+
+	}
+	public void startAddAddress(int maxParaReqNum){
+		this.maxParaBuyReqNum = maxParaReqNum;
+		this.curBuyReqNum = 0;
+		this.curBuyReqNum = 0;
+		this.curBuySucNum = 0;
+		addAddress(-1, "", "");
+	}
+	//共用购买的最大请求和显示UI
+	public synchronized void addAddress(int id, String result, String state){
+		if(id >= 0){
+			if (state.equals("添加地址成功")){
+				curBuySucNum ++;
+				mobile.updateBuyState(curBuySucNum, curBuyReqNum);
+				mobile.addResult(result);
+			}else {
+				mobile.addLog(result);
+			}
+			mobile.updateTableState(id, state);
+			curBuyFinishNum ++;
+		}
+		int diff = maxParaBuyReqNum - (curBuyReqNum - curBuyFinishNum);
+		while(curBuyReqNum < iphonexVec.size() && diff > 0){
+			this.iphonexVec.get(curBuyReqNum).onAddAddress();
 			curBuyReqNum ++;
 			diff --;
 		}

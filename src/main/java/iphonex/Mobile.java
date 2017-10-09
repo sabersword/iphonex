@@ -16,11 +16,10 @@ import java.util.Vector;
 public class Mobile extends JFrame{
 	public static JLabel labelSendMsg,labelLogin,labelBuy,labelSave,labelStock;
 	public static JTable table;
-	public static JButton btnLoad,btnSendMsg,btnLogin,btnBuy,btnSave;
-	private JTextField inputMaxSendMsgReq,inputMaxLoginReq,inputMaxBuyReq,inputProdID,inputModelID;
+	public static JButton btnLoad,btnSendMsg,btnLogin,btnBuy,btnSave,btnAddAddress;
+	private JTextField inputMaxSendMsgReq,inputMaxLoginReq,inputMaxBuyReq,inputGoodsId,inputSkuId;
 	public  volatile static String localPath;
-	public static FileWriter fileWriterLogin,fileWriterGuess;
-	public static BufferedWriter bufferWriterLogin,bufferWriterGuess;
+	public static FileWriter logWriter, resultWriter;
 	public static Object lock=new Object();//表格锁
 	public static Object lockFile=new Object();//文件锁
 	public ReqManager reqManager;
@@ -35,32 +34,57 @@ public class Mobile extends JFrame{
 	public Mobile(){
 		super();
 		initUI();
-//        createLogFile();
+        createLogFile();
 	}
 
 	private void createLogFile(){
-        String path = Mobile.class.getResource("/").toString();
-        path = path.replace("file:/", "");
-        localPath = path;
         try {
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String currentTime = df.format(new Date());
-            path += "log" + currentTime + ".txt";
-            fileWriterLogin = new FileWriter(path);
-            bufferWriterLogin = new BufferedWriter(fileWriterLogin);
+			String logPath = currentTime + ".txt";
+			String resultPath = currentTime + ".csv";
+            logWriter = new FileWriter(logPath, true);
+            resultWriter = new FileWriter(resultPath, true);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
+    public void addLog(String log){
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String currentTime = df.format(new Date());
+		try {
+			logWriter.write(currentTime + " " + log + "\n");
+			logWriter.flush();
+		}catch (IOException e){
+		}
+	}
+	public void addResult(String result){
+    	//,表达式
+		try {
+			resultWriter.write(result + "\n");
+			resultWriter.flush();
+		}catch (IOException e){
+		}
+	}
 
 	private void initUI(){
 		setTitle("手机活动助手");
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize(); //�õ���Ļ�ĳߴ� 
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		int width=(int)screenSize.getWidth();
-		
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				super.windowClosed(e);
+				try {
+					logWriter.close();
+					resultWriter.close();
+				}catch (IOException exception) {
+				}
+			}
+		});
 		setBounds(width/2-325,100,650,400);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);		
+//		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//getContentPane().add(label,BorderLayout.NORTH);
 
 		btnLoad=new JButton();
@@ -120,21 +144,26 @@ public class Mobile extends JFrame{
 		labelSave.setFont(new Font("微软雅黑",Font.PLAIN,12));
 		labelSave.setBounds(40, 250, 90, 20);
 		
-		inputProdID=new JTextField();
-		inputProdID.setBounds(40, 270, 90, 20);
-		inputProdID.setHorizontalAlignment(JTextField.CENTER);
-		inputProdID.setText("1022546");
+		inputGoodsId=new JTextField();
+		inputGoodsId.setBounds(40, 270, 90, 20);
+		inputGoodsId.setHorizontalAlignment(JTextField.CENTER);
+		inputGoodsId.setText("1045210");
 		
-		inputModelID=new JTextField();
-		inputModelID.setBounds(40, 290, 90, 20);
-		inputModelID.setHorizontalAlignment(JTextField.CENTER);
-		inputModelID.setText("1015922");
+		inputSkuId=new JTextField();
+		inputSkuId.setBounds(40, 290, 90, 20);
+		inputSkuId.setHorizontalAlignment(JTextField.CENTER);
+		inputSkuId.setText("1040095");
 		
 		labelStock=new JLabel();
 		labelStock.setText("库存");
 		labelStock.setHorizontalAlignment(JLabel.CENTER);
 		labelStock.setFont(new Font("微软雅黑",Font.PLAIN,12));
 		labelStock.setBounds(40, 310, 90, 20);
+
+		btnAddAddress=new JButton();
+		btnAddAddress.setBounds(40, 350, 90, 25);
+		btnAddAddress.setFont(new Font("微软雅黑",Font.PLAIN,14));
+		btnAddAddress.setText("添加地址");
 		
 		JPanel panel=new JPanel();		
 		panel.setLayout(null);
@@ -151,10 +180,11 @@ public class Mobile extends JFrame{
 		panel.add(labelBuy,null);
 		panel.add(btnSave,null);
 		panel.add(labelSave,null);
-		panel.add(inputProdID,null);
-		panel.add(inputModelID,null);
+		panel.add(inputGoodsId,null);
+		panel.add(inputSkuId,null);
 		panel.add(labelStock,null);
-	
+		panel.add(btnAddAddress,null);
+
 		tableModel=new DefaultTableModel();
 		columnVector=new Vector();
 		columnVector.add("序号");
@@ -184,7 +214,16 @@ public class Mobile extends JFrame{
 	
 		btnLoad.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(final MouseEvent arg0){
-				if(btnLoadClicked())btnLoad.setEnabled(false);
+				if(! loadAccount()){
+					JOptionPane.showMessageDialog(new JPanel(), "错误", "导入帐号异常",JOptionPane.WARNING_MESSAGE);
+				}
+				btnSendMsg.setEnabled(true);
+				btnLogin.setEnabled(true);
+				btnBuy.setEnabled(true);
+				btnAddAddress.setEnabled(true);
+				labelSendMsg.setText("0/0");
+				labelLogin.setText("0/0");
+				labelBuy.setText("0/0");
 			}
 		});
         btnSendMsg.addMouseListener(new MouseAdapter() {
@@ -194,7 +233,7 @@ public class Mobile extends JFrame{
                 int maxReqNum = Integer.valueOf(inputMaxSendMsgReq.getText().trim());
                 reqManager.startSendMsg(maxReqNum);
                 btnSendMsg.setEnabled(false);
-                inputMaxLoginReq.setEditable(false);
+                inputMaxSendMsgReq.setEditable(false);
 
             }
         });
@@ -203,19 +242,23 @@ public class Mobile extends JFrame{
                 int maxReqNum = Integer.valueOf(inputMaxLoginReq.getText().trim());
 				reqManager.startLogin(maxReqNum);
 				btnLogin.setEnabled(false);
-                inputMaxLoginReq.setEditable(false);
+				inputMaxLoginReq.setEditable(false);
 			}
 		});
 		btnBuy.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(final MouseEvent arg0){
                 int maxReqNum = Integer.valueOf(inputMaxBuyReq.getText().trim());
-                int prodID = Integer.valueOf(inputProdID.getText().trim());
-                int modelID = Integer.valueOf(inputModelID.getText().trim());
-                reqManager.startBuy(maxReqNum, prodID, modelID);
-                btnBuy.setEnabled(false);
-                inputMaxBuyReq.setEditable(false);
-
+                reqManager.startBuy(maxReqNum, inputGoodsId.getText().trim(), inputSkuId.getText().trim());
+				btnBuy.setEnabled(false);
+				inputMaxBuyReq.setEditable(false);
             }
+		});
+		btnAddAddress.addMouseListener(new MouseAdapter(){
+			public void mouseClicked(final MouseEvent arg0){
+				int maxReqNum = Integer.valueOf(inputMaxBuyReq.getText().trim());
+				reqManager.startAddAddress(maxReqNum);
+				btnAddAddress.setEnabled(false);
+			}
 		});
         inputMaxSendMsgReq.addFocusListener(new FocusListener(){
             @Override
@@ -294,7 +337,7 @@ public class Mobile extends JFrame{
         String state = String.valueOf(curSucNum) + "/" + String.valueOf(curReqNum);
         labelBuy.setText(state);
     }
-	private boolean btnLoadClicked(){
+	private boolean loadAccount(){
 		JFileChooser fileChooser=new JFileChooser(localPath);
 		FileNameExtensionFilter filter=new FileNameExtensionFilter("文本文件","txt");
 		fileChooser.setFileFilter(filter);
@@ -302,21 +345,41 @@ public class Mobile extends JFrame{
 		fileChooser.setFont(new Font("宋体",Font.PLAIN,20));
 		int returnVal=fileChooser.showOpenDialog(null);
 		if(returnVal == JFileChooser.CANCEL_OPTION){ //APPROVE_OPTION 
-            return false;  
+            return true;
         }  
 		String fileName=fileChooser.getSelectedFile().getAbsolutePath();	
 		selectedFileName=fileName;
-		if(fileName!=""){
-			try {				
-				loadAccountInfo(fileName);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				System.out.println("error");
-				e.printStackTrace();
-			}
+		if (fileName.equals("")){
+			return true;
 		}
-		
-		if(this.reqManager.iphonexVec.size() == 0)return false;
+		try {
+			File srcFile = new File(fileName);
+			FileReader ins;
+			ins = new FileReader(srcFile);
+			BufferedReader readBuf = new BufferedReader(ins);
+			String line;
+			reqManager = new ReqManager(this);
+			int id = 0;
+			while ((line = readBuf.readLine()) != null) {
+				line = line.trim();
+				if (line.equals("") || line.equals(null)) continue;
+				String[] elementArr = line.split(",");
+				int elementLength = elementArr.length;
+				//格式可以是帐号,密文
+				//也可以是帐号,密文,地址信息
+				if (elementLength != 2 && elementLength != 8) continue;
+//				TestBuy testBuy = new TestBuy(reqManager, id, elementArr);
+				AppBuy appBuy = new AppBuy(reqManager, id, elementArr);
+				reqManager.iphonexVec.add(appBuy);
+				id += 1;
+			}
+			readBuf.close();
+		}catch (IOException e){
+			System.out.println("加载帐号错误，请检查格式");
+			return false;
+		}
+
+		if(this.reqManager.iphonexVec.size() == 0)return true;
         Vector dataVector = new Vector();
         for(int i = 0; i<this.reqManager.iphonexVec.size(); i++){
 			Vector rowVector=new Vector();
@@ -337,70 +400,34 @@ public class Mobile extends JFrame{
 	}
 
 	private void btnSaveClicked(){
-		try {	
-			int pos=selectedFileName.lastIndexOf("\\");
-			if(pos==-1)return;
-			String selectedPath=selectedFileName.substring(0, pos+1);
-			JFileChooser fileChooser=new JFileChooser(selectedPath);
-			FileNameExtensionFilter filter=new FileNameExtensionFilter("文本文件","txt");
+//		try {
+			int pos = selectedFileName.lastIndexOf("\\");
+			if(pos == -1)return;
+			String selectedPath = selectedFileName.substring(0, pos+1);
+			JFileChooser fileChooser = new JFileChooser(selectedPath);
+			FileNameExtensionFilter filter = new FileNameExtensionFilter("文本文件","txt");
 			fileChooser.setFileFilter(filter);
 			fileChooser.setDialogTitle("保存");
 			fileChooser.setFont(new Font("微软雅黑",Font.PLAIN,14));
-			File fileSelected=new File(selectedFileName);
+			File fileSelected = new File(selectedFileName);
 			fileChooser.setSelectedFile(fileSelected);
 			int returnVal=fileChooser.showSaveDialog(null);
 			if(returnVal == JFileChooser.CANCEL_OPTION){  
 	            return ;  
 	        }  
-			fileWriterLogin.close();
-			fileWriterGuess.close();
-			bufferWriterLogin.close();
-			bufferWriterGuess.close();
 			String fileName=fileChooser.getSelectedFile().getAbsolutePath();
 			if(fileName.indexOf(".txt") == -1){
 				labelSave.setText("文件格式错误");
 				return;
 			}
-			File fileGuessTmp=new File(localPath + "登录临时文件.txt");
-			File fileGuess=new File(fileName);
-			FileInputStream fileStreamGuessTmp=new FileInputStream(fileGuessTmp);
-			FileOutputStream fileStreamGuess=new FileOutputStream(fileGuess);
-			byte b[]=new byte[(int) fileGuessTmp.length()];
-			fileStreamGuessTmp.read(b);
-			fileStreamGuess.write(b);	
 			labelSave.setText("保存成功！");
 			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
 		
-	}
-	private void loadAccountInfo(String filename) throws IOException{
-	    try {
-            File srcFile = new File(filename);
-            FileReader ins;
-            ins = new FileReader(srcFile);
-            BufferedReader readBuf = new BufferedReader(ins);
-            String s;
-            reqManager = new ReqManager(this);
-            int id = 0;
-            while ((s = readBuf.readLine()) != null) {
-                s = s.trim();
-                if (s.equals("") || s.equals(null) || s.length() < 10) continue;
-                int pos = s.indexOf("-");
-                System.out.println(s);
-                String cellNum = s.substring(0, pos);
-                String cellNumEnc = s.substring(pos + 4);
-                IPhoneX iPhoneX = new IPhoneX(reqManager, id, cellNum, cellNumEnc);
-                reqManager.iphonexVec.add(iPhoneX);
-                id += 1;
-            }
-            readBuf.close();
-        }catch (Exception e){
-	        System.out.println("加载帐号错误，请检查格式");
-        }
 	}
 
 }
