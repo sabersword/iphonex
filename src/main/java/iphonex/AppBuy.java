@@ -115,7 +115,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onSendMsgFail(e.toString());
+                onSendMsgFail(cellNum + " " +e.toString());
             }
 
             @Override
@@ -125,9 +125,9 @@ public class AppBuy extends IPhoneX{
                 if (result.contains("\"retDesc\":\"SUCCESS\"")){
                     setVerifyCode();
                     if(verifyCode.length() == 6) {
-                        onSendMsgSuccess();
+                        onSendMsgSuccess(cellNum);
                     }else {
-                        onSendMsgFail("读取验证码失败");
+                        onSendMsgFail(cellNum + " "+ "读取验证码失败");
                     }
                 }
             }
@@ -158,7 +158,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onLoginFail(e.toString());
+                onLoginFail(cellNum + " " +e.toString());
             }
 
             @Override
@@ -169,9 +169,9 @@ public class AppBuy extends IPhoneX{
                 uid = cookieMap.get("UID");
                 System.out.println("uid:" + uid);
                 if(result.contains("SUCCESS")){
-                    onLoginSuccess();
+                    onLoginSuccess(cellNum);
                 }else {
-                    onLoginFail(result);
+                    onLoginFail(cellNum +" " + result);
                 }
             }
         });
@@ -197,7 +197,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(e.toString());
+                onBuyFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -223,7 +223,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(e.toString());
+                onBuyFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -267,7 +267,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(e.toString());
+                onBuyFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -296,7 +296,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(e.toString());
+                onBuyFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -319,7 +319,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(e.toString());
+                onBuyFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -372,7 +372,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(e.toString());
+                onBuyFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -398,7 +398,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(e.toString());
+                onBuyFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -432,7 +432,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(e.toString());
+                onBuyFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -441,9 +441,9 @@ public class AppBuy extends IPhoneX{
                 String result = response.body().string();
                 System.out.println("submit order: " + result );
                 if (result.contains("topay")){
-                    onBuySuccess();
+                    onBuySuccess(cellNum);
                 }else{
-                    onBuyFail(result);
+                    onBuyFail(cellNum + "" + result);
                 }
             }
         });
@@ -462,7 +462,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onAddAddressFail(e.toString());
+                onAddAddressFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -484,7 +484,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onAddAddressFail(e.toString());
+                onAddAddressFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -513,7 +513,7 @@ public class AppBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onAddAddressFail(e.toString());
+                onAddAddressFail(cellNum + " " + e.toString());
             }
 
             @Override
@@ -521,9 +521,9 @@ public class AppBuy extends IPhoneX{
                 String result = response.body().string();
                 System.out.println("addAddress:" + result);
                 if(result.contains("SUCCESS")) {
-                    onAddAddressSuccess();
+                    onAddAddressSuccess(cellNum);
                 }else {
-                    onAddAddressFail(result);
+                    onAddAddressFail(cellNum + " " + result);
                 }
             }
         });

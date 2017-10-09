@@ -34,6 +34,8 @@ public class ReqManager {
 			if (state.equals("发送验证码成功")){
 				curSendMsgSucNum ++;
 				mobile.updateSendMsgState(curSendMsgSucNum, curSendMsgReqNum);
+			}else {
+				mobile.addLog(result);
 			}
 			mobile.updateTableState(id, state);
 			curSendMsgFinishNum ++;
@@ -55,6 +57,8 @@ public class ReqManager {
 			if (state.equals("登录成功")){
 				curLoginSucNum ++;
 				mobile.updateLoginState(curLoginSucNum, curLoginReqNum);
+			}else {
+				mobile.addLog(result);
 			}
 			mobile.updateTableState(id, state);
 			curLoginFinishNum ++;
@@ -77,6 +81,9 @@ public class ReqManager {
 			if (state.equals("购买成功")){
 				curBuySucNum ++;
 				mobile.updateBuyState(curBuySucNum, curBuyReqNum);
+				mobile.addResult(result);
+			}else {
+				mobile.addLog(result);
 			}
 			mobile.updateTableState(id, state);
 			curBuyFinishNum ++;
@@ -102,6 +109,9 @@ public class ReqManager {
 			if (state.equals("添加地址成功")){
 				curBuySucNum ++;
 				mobile.updateBuyState(curBuySucNum, curBuyReqNum);
+				mobile.addResult(result);
+			}else {
+				mobile.addLog(result);
 			}
 			mobile.updateTableState(id, state);
 			curBuyFinishNum ++;

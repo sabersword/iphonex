@@ -45,26 +45,26 @@ public class IPhoneX {
     public void onSendMsgFail(String msg){
         reqManager.sendMsg(id, msg, "发送验证码失败");
     }
-    public void onSendMsgSuccess(){
-        reqManager.sendMsg(id, "", "发送验证码成功");
+    public void onSendMsgSuccess(String msg){
+        reqManager.sendMsg(id, msg, "发送验证码成功");
     }
     public void onLoginFail(String msg){
         reqManager.login(id, msg, "登录失败");
     }
-    public void onLoginSuccess(){
-        reqManager.login(id, "", "登录成功");
+    public void onLoginSuccess(String msg){
+        reqManager.login(id, msg, "登录成功");
     }
     public void onBuyFail(String msg){
         reqManager.buy(id, msg, "购买失败", goodsId, skuId);
     }
-    public void onBuySuccess(){
-        reqManager.buy(id, "", "购买成功", goodsId, skuId);
+    public void onBuySuccess(String msg){
+        reqManager.buy(id, msg, "购买成功", goodsId, skuId);
     }
     public void onAddAddressFail(String msg){
         reqManager.addAddress(id, msg, "添加地址失败");
     }
-    public void onAddAddressSuccess(){
-        reqManager.addAddress(id, "", "添加地址成功");
+    public void onAddAddressSuccess(String msg){
+        reqManager.addAddress(id, msg, "添加地址成功");
     }
     public String getCellNum(){
         return cellNum;

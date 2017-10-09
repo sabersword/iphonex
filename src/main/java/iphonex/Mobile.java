@@ -19,8 +19,7 @@ public class Mobile extends JFrame{
 	public static JButton btnLoad,btnSendMsg,btnLogin,btnBuy,btnSave,btnAddAddress;
 	private JTextField inputMaxSendMsgReq,inputMaxLoginReq,inputMaxBuyReq,inputGoodsId,inputSkuId;
 	public  volatile static String localPath;
-	public static FileWriter fileWriterLogin,fileWriterGuess;
-	public static BufferedWriter bufferWriterLogin,bufferWriterGuess;
+	public static FileWriter logWriter, resultWriter;
 	public static Object lock=new Object();//表格锁
 	public static Object lockFile=new Object();//文件锁
 	public ReqManager reqManager;
@@ -35,32 +34,57 @@ public class Mobile extends JFrame{
 	public Mobile(){
 		super();
 		initUI();
-//        createLogFile();
+        createLogFile();
 	}
 
 	private void createLogFile(){
-        String path = Mobile.class.getResource("/").toString();
-        path = path.replace("file:/", "");
-        localPath = path;
         try {
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String currentTime = df.format(new Date());
-            path += "log" + currentTime + ".txt";
-            fileWriterLogin = new FileWriter(path);
-            bufferWriterLogin = new BufferedWriter(fileWriterLogin);
+			String logPath = currentTime + ".txt";
+			String resultPath = currentTime + ".csv";
+            logWriter = new FileWriter(logPath, true);
+            resultWriter = new FileWriter(resultPath, true);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
+    public void addLog(String log){
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String currentTime = df.format(new Date());
+		try {
+			logWriter.write(currentTime + " " + log + "\n");
+			logWriter.flush();
+		}catch (IOException e){
+		}
+	}
+	public void addResult(String result){
+    	//,表达式
+		try {
+			resultWriter.write(result + "\n");
+			resultWriter.flush();
+		}catch (IOException e){
+		}
+	}
 
 	private void initUI(){
 		setTitle("手机活动助手");
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize(); //�õ���Ļ�ĳߴ� 
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		int width=(int)screenSize.getWidth();
-		
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				super.windowClosed(e);
+				try {
+					logWriter.close();
+					resultWriter.close();
+				}catch (IOException exception) {
+				}
+			}
+		});
 		setBounds(width/2-325,100,650,400);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);		
+//		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//getContentPane().add(label,BorderLayout.NORTH);
 
 		btnLoad=new JButton();
@@ -376,43 +400,32 @@ public class Mobile extends JFrame{
 	}
 
 	private void btnSaveClicked(){
-		try {	
-			int pos=selectedFileName.lastIndexOf("\\");
-			if(pos==-1)return;
-			String selectedPath=selectedFileName.substring(0, pos+1);
-			JFileChooser fileChooser=new JFileChooser(selectedPath);
-			FileNameExtensionFilter filter=new FileNameExtensionFilter("文本文件","txt");
+//		try {
+			int pos = selectedFileName.lastIndexOf("\\");
+			if(pos == -1)return;
+			String selectedPath = selectedFileName.substring(0, pos+1);
+			JFileChooser fileChooser = new JFileChooser(selectedPath);
+			FileNameExtensionFilter filter = new FileNameExtensionFilter("文本文件","txt");
 			fileChooser.setFileFilter(filter);
 			fileChooser.setDialogTitle("保存");
 			fileChooser.setFont(new Font("微软雅黑",Font.PLAIN,14));
-			File fileSelected=new File(selectedFileName);
+			File fileSelected = new File(selectedFileName);
 			fileChooser.setSelectedFile(fileSelected);
 			int returnVal=fileChooser.showSaveDialog(null);
 			if(returnVal == JFileChooser.CANCEL_OPTION){  
 	            return ;  
 	        }  
-			fileWriterLogin.close();
-			fileWriterGuess.close();
-			bufferWriterLogin.close();
-			bufferWriterGuess.close();
 			String fileName=fileChooser.getSelectedFile().getAbsolutePath();
 			if(fileName.indexOf(".txt") == -1){
 				labelSave.setText("文件格式错误");
 				return;
 			}
-			File fileGuessTmp=new File(localPath + "登录临时文件.txt");
-			File fileGuess=new File(fileName);
-			FileInputStream fileStreamGuessTmp=new FileInputStream(fileGuessTmp);
-			FileOutputStream fileStreamGuess=new FileOutputStream(fileGuess);
-			byte b[]=new byte[(int) fileGuessTmp.length()];
-			fileStreamGuessTmp.read(b);
-			fileStreamGuess.write(b);	
 			labelSave.setText("保存成功！");
 			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
 		
 	}
