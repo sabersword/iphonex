@@ -11,7 +11,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 import javax.net.ssl.*;
@@ -49,10 +48,6 @@ public class InternetBuy extends IPhoneX{
         mBuilder.hostnameVerifier(new InternetBuy.TrustAllHostnameVerifier());
         client = mBuilder.build();
         cookieMap = new HashMap<>();
-        String phpsessid = String.valueOf(id) + Utils.getMd5(String.valueOf(System.currentTimeMillis()));
-        phpsessid = phpsessid.substring(0, 26);
-//        System.out.println("phpsessid:" + phpsessid);
-//        cookieMap.put("PHPSESSID", phpsessid);
         mBuilder.cookieJar(new CookieJar() {
 
             @Override
@@ -174,7 +169,14 @@ public class InternetBuy extends IPhoneX{
                 addRspCookie(response.headers("Set-Cookie"));
                 BufferedImage bi = ImageIO.read(response.body().byteStream());
                 ImageIO.write(bi, "png", new File(codePath));
-                verifyCaptcha();
+                int width = bi.getWidth();
+                int height = bi.getHeight();
+                if (width == 200 && height == 50) {
+                    //不打中文
+                    dama();
+                }else{
+                    getCaptcha();
+                }
             }
             @Override
             public void onFailure(Call call, IOException e) {
@@ -182,17 +184,28 @@ public class InternetBuy extends IPhoneX{
             }
         });
     }
-    
-    public void verifyCaptcha() {
-        String vcode = Dama2.getCode(codePath);
-        System.out.println(vcode);
-        if (!vcode.contains("error")){
-            captcha = vcode;
-        }
+    public void dama() {
+        Call call = client.newCall(LZDama.getDamaRequest(codePath));
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+            }
 
-        System.out.println("input captcha:");
-        Scanner scanner = new Scanner(System.in);
-        this.captcha = scanner.nextLine();
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String result = response.body().string();
+                System.out.println("dama: " + result);
+                if (result.contains("\"result\":true")) {
+                    captcha = Utils.getValue(result, "val\":\"", "\"");
+                    System.out.println("captcha:" + captcha);
+                    verifyCaptcha();
+                } else {
+
+                }
+            }
+        });
+    }
+    public void verifyCaptcha() {
         Request request = new Request.Builder()
                 .url("https://login.10086.cn/verifyCaptcha?inputCode=" + captcha)
                 .addHeader("Cookie", getReqCookie())
@@ -249,7 +262,6 @@ public class InternetBuy extends IPhoneX{
     }
     
     public void getArtifact() {
-//        String url = "http://shop.10086.cn/sso/getartifact.php?&backUrl=" + backUrl;
         String url = "http://search.10086.cn/shop/acceptArtifact?backUrl=http%3A%2F%2Fsearch.10086.cn%2Fshop%2Flist%3Fkey%3DiPhone%2B8%26cityId%3D200%26provinceId%3D200%26nh%3D1&artifact=" + artifact;
         Request request = new Request.Builder()
                 .url(url)
@@ -261,8 +273,6 @@ public class InternetBuy extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
-                System.out.println("cookie1:" + getReqCookie());
-//                getGoods();
                 userinfo();
             }
             @Override
