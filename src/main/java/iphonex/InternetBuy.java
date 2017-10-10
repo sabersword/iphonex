@@ -184,6 +184,12 @@ public class InternetBuy extends IPhoneX{
     }
     
     public void verifyCaptcha() {
+        String vcode = Dama2.getCode(codePath);
+        System.out.println(vcode);
+        if (!vcode.contains("error")){
+            captcha = vcode;
+        }
+
         System.out.println("input captcha:");
         Scanner scanner = new Scanner(System.in);
         this.captcha = scanner.nextLine();
