@@ -250,7 +250,7 @@ public class RegisterMail extends Thread {
             if (result.contains("激活成功")) {
                 System.out.println("成功激活" + loginName);
                 writeLog(loginName + "激活成功");
-                resultWriter.write(loginName);
+                resultWriter.write(loginName + "," + userPassword + lineSeparator);
                 resultWriter.flush();
             }
             else {
