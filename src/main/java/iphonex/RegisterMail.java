@@ -2,6 +2,7 @@ package iphonex;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,7 +23,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class RegisterMail {
+public class RegisterMail extends Thread {
 
     private OkHttpClient client;
     private String captchaPath = "1.jpg";
@@ -34,12 +35,21 @@ public class RegisterMail {
     private String mid;
     private String verifyKey;
     private static final String suffix = "@chacuo.net";
+    private static FileWriter logWriter, resultWriter;
+    private static String lineSeparator;
+
+    public String getCaptchaPath() {
+        return captchaPath;
+    }
+
+    public void setCaptchaPath(String captchaPath) {
+        this.captchaPath = captchaPath;
+    }
 
     public RegisterMail() {
         OkHttpClient.Builder mBuilder = new OkHttpClient.Builder();
         mBuilder.cookieJar(new CookieJar() {
             private final HashMap<String, List<Cookie>> cookieStore = new HashMap<String, List<Cookie>>();
-
             @Override
             public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
                 cookieStore.put(url.host(), cookies);
@@ -53,10 +63,33 @@ public class RegisterMail {
         });
         client = mBuilder.build();
     }
+    
+    static {
+        try {
+            logWriter = new FileWriter("registerLog.txt", true);
+            resultWriter = new FileWriter("registerResult.txt", true);
+            lineSeparator = System.getProperty("line.separator");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void writeLog(String log) {
+        String threadName = Thread.currentThread().getName();
+        try {
+            logWriter.write(threadName + ":" + log + lineSeparator);
+            logWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void getNewMail() {
         String url = "http://24mail.chacuo.net/";
-        Request request = new Request.Builder().url(url).build();
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("User-Agent", "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/7.0)")
+                .build();
         Call call = client.newCall(request);
         try {
             Response response = call.execute();
@@ -98,6 +131,7 @@ public class RegisterMail {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return dama();
         }
         return captcha;
     }
@@ -122,6 +156,12 @@ public class RegisterMail {
             Response response = call.execute();
             String result = response.body().string();
             System.out.println("registerSubmit:" + result);
+            if (result.contains("注册成功")) {
+                writeLog(loginName + "注册成功");
+            }
+            else {
+                writeLog(loginName + "注册失败");
+            }
         } catch (IOException e) {
 
         }
@@ -164,8 +204,9 @@ public class RegisterMail {
             System.out.println(result);
             mid = Utils.getValue(result, "MID\":", ",");
             if (mid.isEmpty()) {
-                Thread.sleep(5000);
+                Thread.sleep(30000);
                 System.out.println("没有收到激活邮件,重新获取");
+                writeLog(loginName + "没有收到激活邮件,重新获取");
                 getActiveMail();
             }
             System.out.println("mid:" + mid);
@@ -206,13 +247,31 @@ public class RegisterMail {
         try {
             Response response = call.execute();
             String result = response.body().string();
-            if (result.contains("激活成功"))
+            if (result.contains("激活成功")) {
                 System.out.println("成功激活" + loginName);
-            else
-                System.out.println("未能激活" + loginName);
+                writeLog(loginName + "激活成功");
+                resultWriter.write(loginName);
+                resultWriter.flush();
+            }
+            else {
+                System.out.println("激活失败" + loginName);
+                writeLog(loginName + "激活失败");
+            }
         } catch (IOException e) {
 
         }
+    }
+    
+    
+    @Override
+    public void run() {
+        getNewMail();
+        getCaptcha();
+        dama();
+        registerSubmit();
+        getActiveMail();
+        getActiveUrl();
+        active();
     }
 
     public static void main(String[] args) {
