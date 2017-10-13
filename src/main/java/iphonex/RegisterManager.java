@@ -1,8 +1,8 @@
 package iphonex;
 
 public class RegisterManager {
-    private static int threadCount = 1;
-
+    private static int threadCount = 400;
+    private static String password = "abcd1234";
     
     public static void main(String[] args) {
         RegisterMail registerThreads[] = new RegisterMail[threadCount];
@@ -10,6 +10,8 @@ public class RegisterManager {
             registerThreads[i] = new RegisterMail();
             registerThreads[i].setName("Thread" + String.valueOf(i));
             registerThreads[i].setCaptchaPath(String.valueOf(i) + ".jpg");
+            registerThreads[i].setNewPasswordRepeat(password);
+            registerThreads[i].setUserPassword(password);
             registerThreads[i].start();
         }
         

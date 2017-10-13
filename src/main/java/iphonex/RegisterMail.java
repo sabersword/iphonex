@@ -26,15 +26,17 @@ import okhttp3.Response;
 public class RegisterMail extends Thread {
 
     private OkHttpClient client;
-    private String captchaPath = "1.jpg";
+    private String captchaPath = "default.jpg";
     private String captcha;
     private String loginName;
-    private String newPasswordRepeat = "abcd1234";
-    private String userPassword = "abcd1234";
+    private String newPasswordRepeat;
+    private String userPassword;
     private String mail;
     private String mid;
     private String verifyKey;
     private static final String suffix = "@chacuo.net";
+    private static final int waitMaxCount = 30;
+    private int waitCount = 0;
     private static FileWriter logWriter, resultWriter;
     private static String lineSeparator;
 
@@ -44,6 +46,22 @@ public class RegisterMail extends Thread {
 
     public void setCaptchaPath(String captchaPath) {
         this.captchaPath = captchaPath;
+    }
+
+    public String getNewPasswordRepeat() {
+        return newPasswordRepeat;
+    }
+
+    public void setNewPasswordRepeat(String newPasswordRepeat) {
+        this.newPasswordRepeat = newPasswordRepeat;
+    }
+
+    public String getUserPassword() {
+        return userPassword;
+    }
+
+    public void setUserPassword(String userPassword) {
+        this.userPassword = userPassword;
     }
 
     public RegisterMail() {
@@ -94,12 +112,15 @@ public class RegisterMail extends Thread {
         try {
             Response response = call.execute();
             String result = response.body().string();
-//            System.out.println("getNewMail:" + result);
             mail = Utils.getValue(result, "type=\"text\" value=\"", "\"");
-//            mail = "fndkba74850";
+            if (mail.isEmpty()) {
+                writeLog("mail为空,获取失败");
+                getNewMail();
+            }
             loginName = mail + suffix;
         } catch (IOException e) {
-
+            writeLog(e.getMessage());
+            getNewMail();
         }
     }
 
@@ -112,7 +133,8 @@ public class RegisterMail extends Thread {
             BufferedImage bi = ImageIO.read(response.body().byteStream());
             ImageIO.write(bi, "png", new File(captchaPath));
         } catch (IOException e) {
-
+            writeLog(e.getMessage());
+            getCaptcha();
         }
     }
 
@@ -130,7 +152,7 @@ public class RegisterMail extends Thread {
                 return dama();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            writeLog(e.getMessage());
             return dama();
         }
         return captcha;
@@ -161,9 +183,13 @@ public class RegisterMail extends Thread {
             }
             else {
                 writeLog(loginName + "注册失败");
+                getCaptcha();
+                dama();
+                registerSubmit();
             }
         } catch (IOException e) {
-
+            writeLog(e.getMessage());
+            registerSubmit();
         }
     }
     
@@ -183,7 +209,8 @@ public class RegisterMail extends Thread {
             String result = response.body().string();
             System.out.println(result);
         } catch (IOException e) {
-
+            writeLog(e.getMessage());
+            setMail();
         }
     }
     
@@ -201,17 +228,23 @@ public class RegisterMail extends Thread {
         try {
             Response response = call.execute();
             String result = response.body().string();
-            System.out.println(result);
+            System.out.println(Thread.currentThread().getName() + ":" + result);
             mid = Utils.getValue(result, "MID\":", ",");
             if (mid.isEmpty()) {
+                if (waitCount++ > waitMaxCount) {
+                    writeLog(loginName + "超时没有收到邮件");
+                    System.out.println(loginName + "超时没有收到邮件");
+                    return;
+                }
                 Thread.sleep(30000);
-                System.out.println("没有收到激活邮件,重新获取");
+                System.out.println(loginName + "没有收到激活邮件,重新获取");
                 writeLog(loginName + "没有收到激活邮件,重新获取");
                 getActiveMail();
             }
             System.out.println("mid:" + mid);
         } catch (Exception e) {
-
+            writeLog(e.getMessage());
+            getActiveMail();
         }
     }
     
@@ -236,7 +269,8 @@ public class RegisterMail extends Thread {
             verifyKey = Utils.getValue(result, "verifyKey=", "\\");
             System.out.println("verifyKey:" + verifyKey);
         } catch (IOException e) {
-
+            writeLog(e.getMessage());
+            getActiveUrl();
         }
     }
     
@@ -256,9 +290,11 @@ public class RegisterMail extends Thread {
             else {
                 System.out.println("激活失败" + loginName);
                 writeLog(loginName + "激活失败");
+                writeLog("result:" + result);
             }
         } catch (IOException e) {
-
+            writeLog(e.getMessage());
+            active();
         }
     }
     
@@ -280,7 +316,7 @@ public class RegisterMail extends Thread {
         registerMail.getCaptcha();
         registerMail.dama();
         registerMail.registerSubmit();
-//        registerMail.setMail();
+        registerMail.setMail();
         registerMail.getActiveMail();
         registerMail.getActiveUrl();
         registerMail.active();
