@@ -60,7 +60,7 @@ public class InternetBuy extends IPhoneX{
 
                     for (String item: arr) {
                         String[] itemArr = item.split("=");
-                        if(itemArr[0].length() == 2) {
+                        if(itemArr.length == 2) {
                             cookieMap.put(itemArr[0], itemArr[1]);
                         }
                     }
