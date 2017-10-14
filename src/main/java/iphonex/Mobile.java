@@ -144,9 +144,9 @@ public class Mobile extends JFrame {
 		labelBuy.setBounds(40, 140, 90, 20);
 		
 		btnSave=new JButton();
-		btnSave.setBounds(40, 225, 90, 25);
+		btnSave.setBounds(40, 310, 90, 25);
 		btnSave.setFont(new Font("微软雅黑",Font.PLAIN,14));
-		btnSave.setText("保存结果");
+		btnSave.setText("保存设置");
 
 		labelSave=new JLabel();
 		labelSave.setText("");
@@ -168,7 +168,7 @@ public class Mobile extends JFrame {
 		labelStock.setText("库存");
 		labelStock.setHorizontalAlignment(JLabel.CENTER);
 		labelStock.setFont(new Font("微软雅黑",Font.PLAIN,12));
-		labelStock.setBounds(40, 310, 90, 20);
+		labelStock.setBounds(40, 330, 90, 20);
 
 		JPanel panel=new JPanel();		
 		panel.setLayout(null);
@@ -399,33 +399,16 @@ public class Mobile extends JFrame {
 	}
 
 	private void btnSaveClicked(){
-//		try {
-			int pos = selectedFileName.lastIndexOf("\\");
-			if(pos == -1)return;
-			String selectedPath = selectedFileName.substring(0, pos+1);
-			JFileChooser fileChooser = new JFileChooser(selectedPath);
-			FileNameExtensionFilter filter = new FileNameExtensionFilter("文本文件","txt");
-			fileChooser.setFileFilter(filter);
-			fileChooser.setDialogTitle("保存");
-			fileChooser.setFont(new Font("微软雅黑",Font.PLAIN,14));
-			File fileSelected = new File(selectedFileName);
-			fileChooser.setSelectedFile(fileSelected);
-			int returnVal=fileChooser.showSaveDialog(null);
-			if(returnVal == JFileChooser.CANCEL_OPTION){  
-	            return ;  
-	        }  
-			String fileName=fileChooser.getSelectedFile().getAbsolutePath();
-			if(fileName.indexOf(".txt") == -1){
-				labelSave.setText("文件格式错误");
-				return;
-			}
-			labelSave.setText("保存成功！");
-			
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		
+		String goodsId = inputGoodsId.getText().trim();
+		String skuId = inputSkuId.getText().trim();
+		if(!goodsId.equals("") && !skuId.equals("")){
+			this.reqManager.setGoodsId(goodsId);
+			this.reqManager.setSkuId(skuId);
+			String msg = "goodsId:" + goodsId + "," + "skuId:" + skuId;
+			JOptionPane.showMessageDialog(this, msg, "保存参数成功",JOptionPane.WARNING_MESSAGE);
+		}else{
+			JOptionPane.showMessageDialog(this, "请检查是否为空", "保存参数失败",JOptionPane.WARNING_MESSAGE);
+		}
 		
 	}
 

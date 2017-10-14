@@ -11,6 +11,8 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.net.ssl.*;
@@ -75,6 +77,7 @@ public class InternetBuy extends IPhoneX{
         });
         okHttpClient = mBuilder.build();
         codePath = "img/" + String.valueOf(id) + ".jpg";
+        Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);
     }
 
     /**
@@ -142,6 +145,7 @@ public class InternetBuy extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
+                response.close();
                 getCheckArtifact();
             }
             @Override
@@ -158,6 +162,7 @@ public class InternetBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
+                response.close();
                 getCaptcha();
             }
             @Override
@@ -183,6 +188,7 @@ public class InternetBuy extends IPhoneX{
                 ImageIO.write(bi, "png", new File(codePath));
                 int width = bi.getWidth();
                 int height = bi.getHeight();
+                response.close();
                 if (width == 200 && height == 50) {
                     dama();
                 }else{
@@ -207,6 +213,7 @@ public class InternetBuy extends IPhoneX{
             public void onResponse(Call call, Response response) throws IOException {
                 String result = response.body().string();
                 System.out.println("dama: " + result);
+                response.close();
                 if (result.contains("\"result\":true")) {
                     captcha = Utils.getValue(result, "val\":\"", "\"");
                     System.out.println("captcha:" + captcha);
@@ -229,6 +236,7 @@ public class InternetBuy extends IPhoneX{
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
+                response.close();
                 if(result.contains("resultCode\":\"0\"")) {
                     login();
                 }else{
@@ -263,6 +271,7 @@ public class InternetBuy extends IPhoneX{
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
+                response.close();
                 artifact = Utils.getValue(result,"artifact\":\"", "\"");
                 uid = Utils.getValue(result,"uid\":\"", "\"");
                 System.out.println("artifact=" + artifact + ",uid=" + uid);
@@ -291,6 +300,7 @@ public class InternetBuy extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
+                response.close();
                 userinfo();
             }
             @Override
@@ -311,6 +321,7 @@ public class InternetBuy extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
+                response.close();
                 getLogin();
             }
             @Override
@@ -339,6 +350,7 @@ public class InternetBuy extends IPhoneX{
             public void onResponse(Call call, Response response) throws IOException {
 //                addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
+                response.close();
                 System.out.println("getstock:" + result);
                 cookieStore.get("shop.10086.cn");
                 userinfo();
@@ -364,6 +376,7 @@ public class InternetBuy extends IPhoneX{
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
                 System.out.println("userinfo:" + result);
+                response.close();
                 sosocheck2();
             }
         });
@@ -387,6 +400,7 @@ public class InternetBuy extends IPhoneX{
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
                 System.out.println("ssocheck2:" + result);
+                response.close();
                 if (result.contains(cellNum)){
                     onLoginSuccess(cellNum);
                 }else{
@@ -413,7 +427,7 @@ public class InternetBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(cellNum + ":" + e.toString());
+                onBuyFail(cellNum + "BUY ERROR:" + e.toString());
             }
 
             @Override
@@ -422,10 +436,11 @@ public class InternetBuy extends IPhoneX{
                 String result = response.body().string();
                 cartCode = Utils.getValue(result, "cart_code=", "\"");
                 System.out.println("cart_code:" + cartCode);
+                response.close();
                 if (! cartCode.equals("")){
                     checkOrder();
                 }else{
-                    onBuyFail(cellNum + ":" + result);
+                    onBuyFail(cellNum + "BUY ERROR:" + result);
                 }
             }
         });
@@ -452,6 +467,7 @@ public class InternetBuy extends IPhoneX{
                 String result = response.body().string();
                 addressId = Utils.getValue(result, "address_id\" value=\"", "\"");
                 System.out.println("addressId:" + addressId);
+                response.close();
                 if(! addressId.equals("")) {
                     submitOrder();
                 }else{
@@ -488,6 +504,7 @@ public class InternetBuy extends IPhoneX{
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
                 System.out.println("submit order: " + result );
+                response.close();
                 if (result.contains("topay")){
                     onBuySuccess(cellNum + "," + cellNumEnc);
                 }else{

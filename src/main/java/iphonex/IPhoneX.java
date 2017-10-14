@@ -53,10 +53,10 @@ public class IPhoneX {
         reqManager.login(id, msg, "登录成功");
     }
     public void onBuyFail(String msg){
-        reqManager.buy(id, msg, "购买失败", goodsId, skuId);
+        reqManager.buy(id, msg, "购买失败");
     }
     public void onBuySuccess(String msg){
-        reqManager.buy(id, msg, "购买成功", goodsId, skuId);
+        reqManager.buy(id, msg, "购买成功");
     }
     public String getCellNum(){
         return cellNum;

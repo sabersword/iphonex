@@ -133,6 +133,7 @@ public class InternetAddress extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
+                response.close();
                 getCheckArtifact();
             }
             @Override
@@ -154,6 +155,7 @@ public class InternetAddress extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
+                response.close();
                 getLogin();
             }
             @Override
@@ -177,6 +179,7 @@ public class InternetAddress extends IPhoneX{
                 addRspCookie(response.headers("Set-Cookie"));
                 BufferedImage bi = ImageIO.read(response.body().byteStream());
                 ImageIO.write(bi, "png", new File(codePath));
+                response.close();
                 int width = bi.getWidth();
                 int height = bi.getHeight();
                 if (width == 200 && height == 50) {
@@ -203,6 +206,7 @@ public class InternetAddress extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String result = response.body().string();
+                response.close();
                 System.out.println("dama: " + result);
                 if (result.contains("\"result\":true")) {
                     captcha = Utils.getValue(result, "val\":\"", "\"");
@@ -227,6 +231,8 @@ public class InternetAddress extends IPhoneX{
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
+                response.close();
+
                 if(result.contains("resultCode\":\"0\"")) {
                     System.out.println("verify success");
                     login();
@@ -250,6 +256,7 @@ public class InternetAddress extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
+                response.close();
                 getCaptcha();
             }
             @Override
@@ -280,6 +287,7 @@ public class InternetAddress extends IPhoneX{
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
+                response.close();
                 artifact = Utils.getValue(result,"artifact\":\"", "\"");
                 uid = Utils.getValue(result,"uid\":\"", "\"");
                 System.out.println("artifact=" + artifact + ",uid=" + uid);
@@ -309,6 +317,7 @@ public class InternetAddress extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
+                response.close();
                 welcome();
             }
             @Override
@@ -330,6 +339,7 @@ public class InternetAddress extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
+                response.close();
                 System.out.println("welcome:" + getReqCookie());
                 logininfo();
             }
@@ -358,6 +368,7 @@ public class InternetAddress extends IPhoneX{
             public void onResponse(Call call, Response response) throws IOException {
                 String result = response.body().string();
                 addRspCookie(response.headers("Set-Cookie"));
+                response.close();
                 if(result.contains("\"loginValue\"")){
                     onLoginSuccess(cellNum);
                 }else{
@@ -386,6 +397,7 @@ public class InternetAddress extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 System.out.println("address:" + response.body().string());
+                response.close();
                 addAddress();
             }
         });
@@ -412,6 +424,7 @@ public class InternetAddress extends IPhoneX{
             public void onResponse(Call call, Response response) throws IOException {
                 String result = response.body().string();
                 System.out.println("add:" + result);
+                response.close();
                 if(result.contains("添加常用收货地址成功")) {
                     System.out.println("add success");
                     String info = cellNum + "," + cellNumEnc + "," +
