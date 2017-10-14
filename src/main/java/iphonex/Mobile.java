@@ -13,30 +13,39 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Vector;
 
-public class Mobile extends JFrame{
-	public static JLabel labelSendMsg,labelLogin,labelBuy,labelSave,labelStock;
+public class Mobile extends JFrame {
+	public static JLabel labelSendMsg, labelLogin, labelBuy, labelSave, labelStock;
 	public static JTable table;
-	public static JButton btnLoad,btnSendMsg,btnLogin,btnBuy,btnSave,btnAddAddress;
-	private JTextField inputMaxSendMsgReq,inputMaxLoginReq,inputMaxBuyReq,inputGoodsId,inputSkuId;
-	public  volatile static String localPath;
+	public static JButton btnLoad, btnSendMsg, btnLogin, btnBuy, btnSave;
+	private JTextField inputMaxSendMsgReq, inputMaxLoginReq, inputMaxBuyReq, inputGoodsId, inputSkuId;
+	public volatile static String localPath;
 	public static FileWriter logWriter, resultWriter;
-	public static Object lock=new Object();//表格锁
-	public static Object lockFile=new Object();//文件锁
+	public static Object lock = new Object();//表格锁
+	public static Object lockFile = new Object();//文件锁
 	public ReqManager reqManager;
-	private String selectedFileName;	
+	private String selectedFileName;
 	private static DefaultTableModel tableModel;
 	private Vector<String> columnVector;
-	public static void main(String arg[]){
-		Mobile mobile=new Mobile();
+
+	public static void main(String arg[]) {
+		Mobile mobile = new Mobile();
 		mobile.setVisible(true);
-		
-	}	
-	public Mobile(){
-		super();
-		initUI();
-        createLogFile();
+
 	}
 
+	public Mobile() {
+		super();
+		initUI();
+		createLogFile();
+		createImgFolder();
+	}
+
+	private void createImgFolder() {
+		File file = new File("img");
+		if(!file.exists()&&!file.isDirectory()){
+			file.mkdir();
+		}
+	}
 	private void createLogFile(){
         try {
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -95,6 +104,7 @@ public class Mobile extends JFrame{
         btnSendMsg.setBounds(40, 25, 90, 25);
         btnSendMsg.setText("发验证码");
         btnSendMsg.setFont(new Font("微软雅黑",Font.PLAIN,14));
+        btnSendMsg.setEnabled(false);
 		btnLogin=new JButton();
 		btnLogin.setBounds(40, 50, 90, 25);
 		btnLogin.setText("登录");
@@ -160,11 +170,6 @@ public class Mobile extends JFrame{
 		labelStock.setFont(new Font("微软雅黑",Font.PLAIN,12));
 		labelStock.setBounds(40, 310, 90, 20);
 
-		btnAddAddress=new JButton();
-		btnAddAddress.setBounds(40, 350, 90, 25);
-		btnAddAddress.setFont(new Font("微软雅黑",Font.PLAIN,14));
-		btnAddAddress.setText("添加地址");
-		
 		JPanel panel=new JPanel();		
 		panel.setLayout(null);
 		panel.add(btnLogin,null);
@@ -183,7 +188,6 @@ public class Mobile extends JFrame{
 		panel.add(inputGoodsId,null);
 		panel.add(inputSkuId,null);
 		panel.add(labelStock,null);
-		panel.add(btnAddAddress,null);
 
 		tableModel=new DefaultTableModel();
 		columnVector=new Vector();
@@ -217,10 +221,9 @@ public class Mobile extends JFrame{
 				if(! loadAccount()){
 					JOptionPane.showMessageDialog(new JPanel(), "错误", "导入帐号异常",JOptionPane.WARNING_MESSAGE);
 				}
-				btnSendMsg.setEnabled(true);
+//				btnSendMsg.setEnabled(true);
 				btnLogin.setEnabled(true);
 				btnBuy.setEnabled(true);
-				btnAddAddress.setEnabled(true);
 				labelSendMsg.setText("0/0");
 				labelLogin.setText("0/0");
 				labelBuy.setText("0/0");
@@ -253,13 +256,7 @@ public class Mobile extends JFrame{
 				inputMaxBuyReq.setEditable(false);
             }
 		});
-		btnAddAddress.addMouseListener(new MouseAdapter(){
-			public void mouseClicked(final MouseEvent arg0){
-				int maxReqNum = Integer.valueOf(inputMaxBuyReq.getText().trim());
-				reqManager.startAddAddress(maxReqNum);
-				btnAddAddress.setEnabled(false);
-			}
-		});
+
         inputMaxSendMsgReq.addFocusListener(new FocusListener(){
             @Override
             public void focusGained(FocusEvent e) {
@@ -339,7 +336,7 @@ public class Mobile extends JFrame{
     }
 	private boolean loadAccount(){
 		JFileChooser fileChooser=new JFileChooser(localPath);
-		FileNameExtensionFilter filter=new FileNameExtensionFilter("文本文件","txt");
+		FileNameExtensionFilter filter=new FileNameExtensionFilter("文本文件","txt", "csv");
 		fileChooser.setFileFilter(filter);
 		fileChooser.setDialogTitle("选择文件");
 		fileChooser.setFont(new Font("宋体",Font.PLAIN,20));
@@ -369,8 +366,10 @@ public class Mobile extends JFrame{
 				//也可以是帐号,密文,地址信息
 				if (elementLength != 2 && elementLength != 8) continue;
 //				TestBuy testBuy = new TestBuy(reqManager, id, elementArr);
-				AppBuy appBuy = new AppBuy(reqManager, id, elementArr);
-				reqManager.iphonexVec.add(appBuy);
+//				AppBuy appBuy = new AppBuy(reqManager, id, elementArr);
+//				InternetAddress iphonex = new InternetAddress(reqManager, id, elementArr);
+				InternetBuy iphonex = new InternetBuy(reqManager, id, elementArr);
+				reqManager.iphonexVec.add(iphonex);
 				id += 1;
 			}
 			readBuf.close();

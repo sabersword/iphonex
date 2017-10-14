@@ -21,23 +21,11 @@ public class InternetAddress extends IPhoneX{
     private OkHttpClient client;
     private OkHttpClient okHttpClient;
     private HashMap<String, String> cookieMap;
-    private String cartCode;
-    private String addressId;
-    private String TransactionID;
     private String uid;
-    private String merchantId;
-    private String targetChannelID;
-    private String codePath = "1.jpg";
+    private String codePath;
     private String captcha;
     private String artifact;
-    private final String backUrl = "http://shop.10086.cn/i/?f=home_isLogin";
-    private final String backUrlEncode = "http%3A%2F%2Fshop.10086.cn%2Fi%2F%3Ff%3Dhome_isLogin";
-
-    private final String refererUrl = "https://login.10086.cn/login.html?channelID=12003&backUrl=http://shop.10086.cn/i/";
     private final String userAgent = "Mozilla/5.0 (Linux; Android 6.0.1; SM-C7000 Build/MMB29M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/55.0.2883.91 Mobile Safari/537.36 leadeon/4.0.0";
-    private String skuId = "1040095";
-    private String goodsId = "1045210";
-    private final String goodsUrl = "http://shop.10086.cn/goods/200_200_"+ goodsId+"_"+skuId+".html";
     private final HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
 
 
@@ -77,6 +65,8 @@ public class InternetAddress extends IPhoneX{
             }
         });
         okHttpClient = mBuilder.build();
+        codePath = "img/" + String.valueOf(id) + ".jpg";
+
     }
 
     /**
@@ -124,6 +114,15 @@ public class InternetAddress extends IPhoneX{
             return true;
         }
     }
+
+    @Override
+    public void onLogin(){
+        ssocheck();
+    }
+    @Override
+    public void onBuy(String a, String b){
+        getAddress();
+    }
     public void ssocheck(){
         String url = "https://login.10086.cn/SSOCheck.action?channelID=12002&backUrl=http://shop.10086.cn/i/?f=home_isLogin";
         Request request = new Request.Builder()
@@ -139,6 +138,7 @@ public class InternetAddress extends IPhoneX{
             @Override
             public void onFailure(Call call, IOException e) {
                 System.out.println("loginPage: " + e.toString());
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -154,11 +154,11 @@ public class InternetAddress extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
-                System.out.println("cookie1:" + getReqCookie());
                 getLogin();
             }
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -180,7 +180,6 @@ public class InternetAddress extends IPhoneX{
                 int width = bi.getWidth();
                 int height = bi.getHeight();
                 if (width == 200 && height == 50) {
-                    //不打中文
                     dama();
                 }else{
                     getCaptcha();
@@ -188,7 +187,7 @@ public class InternetAddress extends IPhoneX{
             }
             @Override
             public void onFailure(Call call, IOException e) {
-                System.out.println("getCaptchazh failed");
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -198,6 +197,7 @@ public class InternetAddress extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
             }
 
             @Override
@@ -209,7 +209,7 @@ public class InternetAddress extends IPhoneX{
                     System.out.println("captcha:" + captcha);
                     verifyCaptcha();
                 } else {
-
+                    onLoginFail(cellNum + ":" + result);
                 }
             }
         });
@@ -232,11 +232,13 @@ public class InternetAddress extends IPhoneX{
                     login();
                 }else{
                     System.out.println("verify:" + result);
+                    onLoginFail(cellNum + ":" + result);
                 }
             }
             @Override
             public void onFailure(Call call, IOException e) {
-                System.out.println("verifyCaptcha failed");
+                onLoginFail(cellNum + ":" + e.toString());
+
             }
         });
     }
@@ -252,6 +254,7 @@ public class InternetAddress extends IPhoneX{
             }
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -280,10 +283,15 @@ public class InternetAddress extends IPhoneX{
                 artifact = Utils.getValue(result,"artifact\":\"", "\"");
                 uid = Utils.getValue(result,"uid\":\"", "\"");
                 System.out.println("artifact=" + artifact + ",uid=" + uid);
-                getArtifact();
+                if (! artifact.equals("")){
+                    getArtifact();
+                }else{
+                    onLoginFail(cellNum + ":" + result);
+                }
             }
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -305,6 +313,7 @@ public class InternetAddress extends IPhoneX{
             }
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -326,6 +335,8 @@ public class InternetAddress extends IPhoneX{
             }
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
+
             }
         });
     }
@@ -340,21 +351,25 @@ public class InternetAddress extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-//                onBuyFail(cellNum + " " + e.toString());
+                onLoginFail(cellNum + ":" + e.toString());
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                System.out.println("logininfo:" + response.body().string());
+                String result = response.body().string();
                 addRspCookie(response.headers("Set-Cookie"));
+                if(result.contains("\"loginValue\"")){
+                    onLoginSuccess(cellNum);
+                }else{
+                    onLoginFail(cellNum + ":" + result);
+                }
 
-                getAddress();
             }
         });
     }
 
     public void getAddress(){
-        String url = "http://shop.10086.cn/i/v1/cust/recaddr/2275174122@qq.com?_=" + String.valueOf(System.currentTimeMillis());
+        String url = "http://shop.10086.cn/i/v1/cust/recaddr/"+cellNum+"?_=" + String.valueOf(System.currentTimeMillis());
         System.out.println("addresscookie:" + getReqCookie());
         Request request = new Request.Builder()
                 .url(url)
@@ -365,7 +380,7 @@ public class InternetAddress extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-//                onBuyFail(cellNum + " " + e.toString());
+                onBuyFail(cellNum + ":" + e.toString());
             }
 
             @Override
@@ -376,8 +391,9 @@ public class InternetAddress extends IPhoneX{
         });
     }
     public void addAddress(){
-        String url = "http://shop.10086.cn/i/v1/cust/recaddr/2275174122@qq.com";
-        String data = "{\"recName\":\"胡测\",\"recPhoneNo\":\"18989898989\",\"zipCode\":\"\",\"recTel\":\"\",\"provinceCode\":\"440000\",\"regionCode\":\"440113\",\"cityCode\":\"440100\",\"street\":\"大学城广东工业大学\",\"isDefault\":1,\"oneStepBuy\":0}";
+        String url = "http://shop.10086.cn/i/v1/cust/recaddr/" + cellNum;
+        String data = "{\"recName\":\""+recName+"\",\"recPhoneNo\":\""+recPhoneNo+"\",\"zipCode\":\"\",\"recTel\":\"\",\"provinceCode\":\""+provinceCode+"\",\"regionCode\":\""+regionCode+"\",\"cityCode\":\""+cityCode+"\",\"street\":\""+street+"\",\"isDefault\":1,\"oneStepBuy\":0}";
+        System.out.println("data:" + data);
         MediaType mediaType = MediaType.parse("application/json");
         RequestBody requestBody = RequestBody.create(mediaType, data);
         Request request = new Request.Builder()
@@ -389,6 +405,7 @@ public class InternetAddress extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                onBuyFail(cellNum + ":" + e.toString());
             }
 
             @Override
@@ -397,6 +414,13 @@ public class InternetAddress extends IPhoneX{
                 System.out.println("add:" + result);
                 if(result.contains("添加常用收货地址成功")) {
                     System.out.println("add success");
+                    String info = cellNum + "," + cellNumEnc + "," +
+                            recName + "," + recPhoneNo + "," +
+                            provinceCode + "," + cityCode + "," +
+                            regionCode + "," + street;
+                    onBuySuccess(info);
+                }else{
+                    onBuyFail(cellNum + ":" + result);
                 }
             }
         });

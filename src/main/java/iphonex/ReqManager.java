@@ -25,13 +25,13 @@ public class ReqManager {
 		this.mobile = mobile;
 		iphonexVec = new Vector<>();
 	}
-	public void startSendMsg(int maxParaReqNum){
+	public synchronized void startSendMsg(int maxParaReqNum){
 		this.maxParaSendMsgReqNum = maxParaReqNum;
 		sendMsg(-1, "", "");
 	}
 	public synchronized void sendMsg(int id, String result, String state){
 		if(id >= 0){
-			if (state.equals("发送验证码成功")){
+			if (state.contains("成功")){
 				curSendMsgSucNum ++;
 				mobile.updateSendMsgState(curSendMsgSucNum, curSendMsgReqNum);
 			}else {
@@ -48,17 +48,27 @@ public class ReqManager {
 		}
 
 	}
-	public  void startLogin(int maxParaReqNum){
+	public synchronized void startLogin(int maxParaReqNum){
 		this.maxParaLoginReqNum = maxParaReqNum;
+		curLoginFinishNum = 0;
+		curLoginReqNum = 0;
+		curLoginSucNum = 0;
 		login(-1, "", "");
 	}
 	public synchronized void login(int id, String result, String state){
 		if(id >= 0){
-			if (state.equals("登录成功")){
+			if (state.contains("成功")){
 				curLoginSucNum ++;
 				mobile.updateLoginState(curLoginSucNum, curLoginReqNum);
 			}else {
-				mobile.addLog(result);
+				if(result.contains("SocketTimeoutException") || result.contains("\"resultCode\":\"1\"")){
+					//重新登录
+					this.iphonexVec.get(id).onLogin();
+					mobile.updateTableState(id, "重新登录...");
+					return;
+				}else {
+					mobile.addLog("login:" + result);
+				}
 			}
 			mobile.updateTableState(id, state);
 			curLoginFinishNum ++;
@@ -71,19 +81,24 @@ public class ReqManager {
 		}
 
 	}
-	public void startBuy(int maxParaReqNum, String goodsId, String skuId){
+	public synchronized void startBuy(int maxParaReqNum, String goodsId, String skuId){
 		this.maxParaBuyReqNum = maxParaReqNum;
+		curBuyFinishNum = 0;
+		curBuyReqNum = 0;
+		curBuySucNum = 0;
 		buy(-1, "", "", goodsId, skuId);
 	}
 
 	public synchronized void buy(int id, String result, String state, String goodsId, String skuId){
 		if(id >= 0){
-			if (state.equals("购买成功")){
+			if (state.contains("成功")){
 				curBuySucNum ++;
 				mobile.updateBuyState(curBuySucNum, curBuyReqNum);
-				mobile.addResult(result);
+				if (!result.equals("")){//为空为重复提交，不写入
+					mobile.addResult(result);
+				}
 			}else {
-				mobile.addLog(result);
+				mobile.addLog("buy:" + result);
 			}
 			mobile.updateTableState(id, state);
 			curBuyFinishNum ++;
@@ -91,34 +106,6 @@ public class ReqManager {
 		int diff = maxParaBuyReqNum - (curBuyReqNum - curBuyFinishNum);
 		while(curBuyReqNum < iphonexVec.size() && diff > 0){
 			this.iphonexVec.get(curBuyReqNum).onBuy(goodsId, skuId);
-			curBuyReqNum ++;
-			diff --;
-		}
-
-	}
-	public void startAddAddress(int maxParaReqNum){
-		this.maxParaBuyReqNum = maxParaReqNum;
-		this.curBuyReqNum = 0;
-		this.curBuyReqNum = 0;
-		this.curBuySucNum = 0;
-		addAddress(-1, "", "");
-	}
-	//共用购买的最大请求和显示UI
-	public synchronized void addAddress(int id, String result, String state){
-		if(id >= 0){
-			if (state.equals("添加地址成功")){
-				curBuySucNum ++;
-				mobile.updateBuyState(curBuySucNum, curBuyReqNum);
-				mobile.addResult(result);
-			}else {
-				mobile.addLog(result);
-			}
-			mobile.updateTableState(id, state);
-			curBuyFinishNum ++;
-		}
-		int diff = maxParaBuyReqNum - (curBuyReqNum - curBuyFinishNum);
-		while(curBuyReqNum < iphonexVec.size() && diff > 0){
-			this.iphonexVec.get(curBuyReqNum).onAddAddress();
 			curBuyReqNum ++;
 			diff --;
 		}

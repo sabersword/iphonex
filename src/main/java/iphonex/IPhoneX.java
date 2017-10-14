@@ -40,8 +40,6 @@ public class IPhoneX {
     }
     public void onBuy(String goodsId, String skuId){
     }
-    public void onAddAddress(){
-    }
     public void onSendMsgFail(String msg){
         reqManager.sendMsg(id, msg, "发送验证码失败");
     }
@@ -59,12 +57,6 @@ public class IPhoneX {
     }
     public void onBuySuccess(String msg){
         reqManager.buy(id, msg, "购买成功", goodsId, skuId);
-    }
-    public void onAddAddressFail(String msg){
-        reqManager.addAddress(id, msg, "添加地址失败");
-    }
-    public void onAddAddressSuccess(String msg){
-        reqManager.addAddress(id, msg, "添加地址成功");
     }
     public String getCellNum(){
         return cellNum;

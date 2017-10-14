@@ -28,7 +28,7 @@ public class InternetBuy extends IPhoneX{
     private String uid;
     private String merchantId;
     private String targetChannelID;
-    private String codePath = "1.jpg";
+    private String codePath;
     private String captcha;
     private String artifact;
     private final String backUrl = "http%3A%2F%2Fshop.10086.cn%2Fmall_200_200.html%3Fforcelogin%3D1";
@@ -74,6 +74,7 @@ public class InternetBuy extends IPhoneX{
             }
         });
         okHttpClient = mBuilder.build();
+        codePath = "img/" + String.valueOf(id) + ".jpg";
     }
 
     /**
@@ -121,6 +122,16 @@ public class InternetBuy extends IPhoneX{
             return true;
         }
     }
+    @Override
+    public void onLogin(){
+        ssocheck();
+    }
+    @Override
+    public void onBuy(String goodsId, String skuId){
+        this.goodsId = goodsId;
+        this.skuId = skuId;
+        buyBuy();
+    }
     public void ssocheck(){
         String url = "https://login.10086.cn/SSOCheck.action?channelID=12002&backUrl=" + backUrl;
         Request request = new Request.Builder()
@@ -135,7 +146,7 @@ public class InternetBuy extends IPhoneX{
             }
             @Override
             public void onFailure(Call call, IOException e) {
-                System.out.println("loginPage: " + e.toString());
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -151,6 +162,7 @@ public class InternetBuy extends IPhoneX{
             }
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -172,7 +184,6 @@ public class InternetBuy extends IPhoneX{
                 int width = bi.getWidth();
                 int height = bi.getHeight();
                 if (width == 200 && height == 50) {
-                    //不打中文
                     dama();
                 }else{
                     getCaptcha();
@@ -180,7 +191,7 @@ public class InternetBuy extends IPhoneX{
             }
             @Override
             public void onFailure(Call call, IOException e) {
-                System.out.println("getCaptchazh failed");
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -189,6 +200,7 @@ public class InternetBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
             }
 
             @Override
@@ -200,7 +212,7 @@ public class InternetBuy extends IPhoneX{
                     System.out.println("captcha:" + captcha);
                     verifyCaptcha();
                 } else {
-
+                    onLoginFail(cellNum + ":" + result);
                 }
             }
         });
@@ -220,12 +232,13 @@ public class InternetBuy extends IPhoneX{
                 if(result.contains("resultCode\":\"0\"")) {
                     login();
                 }else{
-                    System.out.println("verify:" + result);
+                    onLoginFail(cellNum + ":" + result);
                 }
             }
             @Override
             public void onFailure(Call call, IOException e) {
-                System.out.println("verifyCaptcha failed");
+                onLoginFail(cellNum + ":" + e.toString());
+
             }
         });
     }
@@ -253,10 +266,15 @@ public class InternetBuy extends IPhoneX{
                 artifact = Utils.getValue(result,"artifact\":\"", "\"");
                 uid = Utils.getValue(result,"uid\":\"", "\"");
                 System.out.println("artifact=" + artifact + ",uid=" + uid);
-                getArtifact();
+                if (! artifact.equals("")){
+                    getArtifact();
+                }else{
+                    onLoginFail(cellNum + ":" + result);
+                }
             }
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -277,6 +295,7 @@ public class InternetBuy extends IPhoneX{
             }
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
@@ -292,37 +311,15 @@ public class InternetBuy extends IPhoneX{
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
-                System.out.println("cookie1:" + getReqCookie());
                 getLogin();
             }
             @Override
             public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
             }
         });
     }
-    public void getGoods(){
-        System.out.println("goods cookie:" + getReqCookie());
 
-        Request request = new Request.Builder()
-                .url(goodsUrl)
-                .addHeader("Cookie", getReqCookie())
-                .build();
-        Call call = client.newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-//                onBuyFail(cellNum + " " + e.toString());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String result = response.body().string();
-                merchantId = Utils.getValue(result, "merchant_id:\"", "\"");
-                System.out.println("merchantId:"+merchantId);
-                getstock();
-            }
-        });
-    }
     public void getstock(){
         String url = "http://shop.10086.cn/ajax/detail/getstock.json?goods_id="+goodsId+"&merchant_id="+merchantId+"&sale_type=1&sku_id="+skuId;
         System.out.println("cookie:" + getReqCookie());
@@ -359,7 +356,7 @@ public class InternetBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-//                onBuyFail(cellNum + " " + e.toString());
+                onLoginFail(cellNum + ":" + e.toString());
             }
 
             @Override
@@ -382,18 +379,21 @@ public class InternetBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-//                onBuyFail(cellNum + " " + e.toString());
+                onLoginFail(cellNum + ":" + e.toString());
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
-                System.out.println("userinfo:" + result);
-                buyBuy();
+                System.out.println("ssocheck2:" + result);
+                if (result.contains(cellNum)){
+                    onLoginSuccess(cellNum);
+                }else{
+                    onLoginSuccess(cellNum + ":" + "ssocheck2 error");
+                }
             }
         });
-
 
 
     }
@@ -413,7 +413,7 @@ public class InternetBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-//                onBuyFail(cellNum + " " + e.toString());
+                onBuyFail(cellNum + ":" + e.toString());
             }
 
             @Override
@@ -422,7 +422,11 @@ public class InternetBuy extends IPhoneX{
                 String result = response.body().string();
                 cartCode = Utils.getValue(result, "cart_code=", "\"");
                 System.out.println("cart_code:" + cartCode);
-                checkOrder();
+                if (! cartCode.equals("")){
+                    checkOrder();
+                }else{
+                    onBuyFail(cellNum + ":" + result);
+                }
             }
         });
     }
@@ -439,7 +443,7 @@ public class InternetBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(cellNum + " " + e.toString());
+                onBuyFail(cellNum + ":" + e.toString());
             }
 
             @Override
@@ -448,7 +452,11 @@ public class InternetBuy extends IPhoneX{
                 String result = response.body().string();
                 addressId = Utils.getValue(result, "address_id\" value=\"", "\"");
                 System.out.println("addressId:" + addressId);
-                submitOrder();
+                if(! addressId.equals("")) {
+                    submitOrder();
+                }else{
+                    onBuyFail(cellNum + ":" + "address is null");
+                }
             }
         });
     }
@@ -472,7 +480,7 @@ public class InternetBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-//                onBuyFail(cellNum + " " + e.toString());
+                onBuyFail(cellNum + ":" + e.toString());
             }
 
             @Override
@@ -481,9 +489,9 @@ public class InternetBuy extends IPhoneX{
                 String result = response.body().string();
                 System.out.println("submit order: " + result );
                 if (result.contains("topay")){
-//                    onBuySuccess(cellNum);
+                    onBuySuccess(cellNum + "," + cellNumEnc);
                 }else{
-//                    onBuyFail(cellNum + "" + result);
+                    onBuyFail(cellNum + "" + result);
                 }
             }
         });
@@ -495,7 +503,7 @@ public class InternetBuy extends IPhoneX{
         for(String cookieLine: cookies){
             String[] cookieArr = cookieLine.split(";");
             for(String cookie: cookieArr){
-                System.out.println(cookie);
+//                System.out.println(cookie);
                 String[] arr = cookie.split("=");
                 if (arr.length == 2) {
                     cookieMap.put(arr[0], arr[1]);
@@ -515,10 +523,10 @@ public class InternetBuy extends IPhoneX{
 
     public static void main(String[] args) throws Exception {
         ReqManager reqManager = new ReqManager(new Mobile());
-        String[] elementArr = {"280139726@qq.com", "godigmh123456"};
+        String[] elementArr = {"avefdo04921@chacuo.net", "abcd1234"};
         InternetBuy internetBuy = new InternetBuy(reqManager,0,elementArr);
-        internetBuy.ssocheck();
-
+        internetBuy.onLogin();
+        internetBuy.onBuy("1045210", "1040095");
     }
 
 }
