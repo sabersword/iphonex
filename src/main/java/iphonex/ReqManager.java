@@ -1,5 +1,7 @@
 package iphonex;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Vector;
 
 public class ReqManager {
@@ -25,6 +27,7 @@ public class ReqManager {
 	private volatile String skuId;
 
 	private volatile boolean buyState = false;
+	private volatile HashMap<String, Boolean> hasStock;
 
 	public ReqManager(Mobile mobile){
 		this.mobile = mobile;
@@ -34,7 +37,19 @@ public class ReqManager {
 		this.goodsId = goodsId;
 	}
 	public synchronized void setSkuId(String skuId){
+		hasStock = new HashMap<>();
 		this.skuId = skuId;
+		//动态设置其它skuid
+		String prefix = skuId.substring(0, skuId.length() - 3);
+		int last3Num = Integer.valueOf(skuId.substring(skuId.length() - 3));
+		for (int i = 0; i< 4; i++){
+			int cur3Num = last3Num + i;
+			String last3Str = String.valueOf(cur3Num);
+			while(last3Str.length() < 3){
+				last3Str = "0" + last3Str;
+			}
+			hasStock.put(prefix + last3Str, true);
+		}
 	}
 	public synchronized void startSendMsg(int maxParaReqNum){
 		this.maxParaSendMsgReqNum = maxParaReqNum;
@@ -106,36 +121,75 @@ public class ReqManager {
 				curBuySucNum ++;
 				mobile.updateBuyState(curBuySucNum, curBuyReqNum);
 				mobile.addResult(result);
-				buyState = true; //有一个购买成功则正常开启全部线程
-			}else {
-				//在爬虫购买环节异常时，只开一个线程
-				//进一步分析当已经登录有效时，重复尝试购买
+				if(!buyState){//有一个购买成功则正常开启全部线程
+					buyState = true;
+				}
+			}else {//购买失败
+				String code = Utils.getValue(result, "\"code\":", ",").trim();
+				if (buyState){//已经进入购买状态
+					if(code.equals("9000")){//若该skuId无货，设置无货标记。
+						String currentSkuId = this.iphonexVec.get(id).skuId;
+						hasStock.put(currentSkuId, false);
+					}
+					if (!code.equals("2")){	// 只要不提示未登录，则选一个有货的skuId重复购买。（提前确保地址有效，对于超时等异常重复购买）
+						String currentSkuId = "";
+						for (HashMap.Entry<String, Boolean> entry : hasStock.entrySet()) {
+							if (entry.getValue()){
+								currentSkuId = entry.getKey();
+								break;
+							}
+						}
+						String currentStatus = "商品已无货";
+						if(!currentSkuId.equals("")){
+							this.iphonexVec.get(id).onBuy(goodsId, currentSkuId);
+							currentStatus = "重新购买...";
+						}
+						mobile.updateTableState(id, currentStatus);
+						return;
+					}
+				}
+
+
+				//试探阶段只用一个账号，且当监测当已经登录有效时，重复尝试购买，否则用下一个帐号
 				if ((! buyState) && result.contains("BUY ERROR")) {
 					tmpBuyReqNum = 1;
-					String code = Utils.getValue(result, "\"code\":", ",").trim();
-					if (! code.equals("2")) {//登录有效
+					if (! code.equals("2")) {//登录有效重复购买，否则会启动下一个账号
 						this.iphonexVec.get(id).onBuy(goodsId, skuId);
 						mobile.updateTableState(id, "重新购买...");
 						try {
-							Thread.sleep(5000);
+							Thread.sleep(500);//0.5s
 						}catch (Exception e){
 
 						}
 						return;
 					}
 				}
+
 				mobile.addLog("buy:" + result);
 			}
 			mobile.updateTableState(id, state);
 			curBuyFinishNum ++;
 		}
-		//用一个试探线程
-		if (id == -1){
+
+		if (id == -1){//刚点击购买，用一个试探线程
 			tmpBuyReqNum = 1;
 		}
 		int diff = tmpBuyReqNum - (curBuyReqNum - curBuyFinishNum);
+		ArrayList<String> hasStockList = new ArrayList<>();
+		for (HashMap.Entry<String, Boolean> entry : hasStock.entrySet()) {
+			if (entry.getValue()){
+				hasStockList.add(entry.getKey());
+			}
+		}
+		int hasStockLen = hasStockList.size();
+		if(hasStockLen == 0)return;
 		while(curBuyReqNum < iphonexVec.size() && diff > 0){
-			this.iphonexVec.get(curBuyReqNum).onBuy(goodsId, skuId);
+			//均匀分布购买的skuId
+			int index = curBuyReqNum % hasStockLen;
+			if (!buyState){//试探阶段，用默认的skuId
+				index = 0;
+			}
+			this.iphonexVec.get(curBuyReqNum).onBuy(goodsId, hasStockList.get(index));
 			curBuyReqNum ++;
 			diff --;
 		}

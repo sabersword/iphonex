@@ -404,10 +404,10 @@ public class Mobile extends JFrame {
 		if(!goodsId.equals("") && !skuId.equals("")){
 			this.reqManager.setGoodsId(goodsId);
 			this.reqManager.setSkuId(skuId);
-			String msg = "goodsId:" + goodsId + "," + "skuId:" + skuId;
-			JOptionPane.showMessageDialog(this, msg, "保存参数成功",JOptionPane.WARNING_MESSAGE);
-		}else{
-			JOptionPane.showMessageDialog(this, "请检查是否为空", "保存参数失败",JOptionPane.WARNING_MESSAGE);
+//			String msg = "goodsId:" + goodsId + "," + "skuId:" + skuId;
+//			JOptionPane.showMessageDialog(this, msg, "保存参数成功",JOptionPane.WARNING_MESSAGE);
+//		}else{
+//			JOptionPane.showMessageDialog(this, "请检查是否为空", "保存参数失败",JOptionPane.WARNING_MESSAGE);
 		}
 		
 	}
