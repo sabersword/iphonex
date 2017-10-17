@@ -48,7 +48,7 @@ public class Mobile extends JFrame {
 	}
 	private void createLogFile(){
         try {
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH_mm_ss");
             String currentTime = df.format(new Date());
 			String logPath = currentTime + ".txt";
 			String resultPath = currentTime + ".csv";

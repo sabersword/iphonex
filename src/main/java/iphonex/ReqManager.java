@@ -2,6 +2,7 @@ package iphonex;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
 import java.util.Vector;
 
 public class ReqManager {
@@ -28,6 +29,7 @@ public class ReqManager {
 
 	private volatile boolean buyState = false;
 	private volatile HashMap<String, Boolean> hasStock;
+	private static final int heartBeatPeriod = 300000;
 
 	public ReqManager(Mobile mobile){
 		this.mobile = mobile;
@@ -80,6 +82,7 @@ public class ReqManager {
 		curLoginReqNum = 0;
 		curLoginSucNum = 0;
 		login(-1, "", "");
+		new Timer().schedule(new HeartBeat(this), heartBeatPeriod, heartBeatPeriod);
 	}
 	public synchronized void login(int id, String result, String state){
 		if(id >= 0){

@@ -435,7 +435,7 @@ public class InternetBuy extends IPhoneX{
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
                 cartCode = Utils.getValue(result, "cart_code=", "\"");
-                System.out.println("cart_code:" + cartCode);
+//                System.out.println("cart_code:" + cartCode);
                 response.close();
                 if (! cartCode.equals("")){
                     checkOrder();
@@ -445,6 +445,43 @@ public class InternetBuy extends IPhoneX{
             }
         });
     }
+    
+    /**
+     * 
+    * @Title: heartBeatBuy 
+    * @Description: 发送购买心跳防止session过期,与buybuy()区分,避免cartcode影响
+    * @param    参数
+    * @return void    返回类型 
+    * @throws
+     */
+    @Override
+    public void onHeartBeatBuy(String goodsId, String skuId){
+        String url = "http://shop.10086.cn/ajax/buy/buy.json";
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded; charset=UTF-8");
+        String data = "sku%5B0%5D%5BModelId%5D="+skuId+"&sku%5B0%5D%5BGoodsId%5D="+goodsId+"&sku%5B0%5D%5BNum%5D=1&sku%5B0%5D%5BGoodsType%5D=70000&sku%5B0%5D%5BChannel%5D=1&sku%5B0%5D%5BProvinceId%5D=200&sku%5B0%5D%5BCityId%5D=200";
+        RequestBody requestBody = RequestBody.create(mediaType, data);
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Referer", goodsUrl)
+                .addHeader("Cookie", getReqCookie())
+                .addHeader("User-Agent",userAgent)
+                .post(requestBody)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+            }
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                addRspCookie(response.headers("Set-Cookie"));
+                String result = response.body().string();
+                System.out.println(result);
+                response.close();
+            }
+        });
+    }
+    
     public void checkOrder(){
         String url = "http://shop.10086.cn/order/checkorder.php?";
         url += "cart_code=" + cartCode;

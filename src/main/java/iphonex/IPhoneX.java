@@ -40,6 +40,8 @@ public class IPhoneX {
     }
     public void onBuy(String goodsId, String skuId){
     }
+    public void onHeartBeatBuy(String goodsId, String skuId) {
+    }
     public void onSendMsgFail(String msg){
         reqManager.sendMsg(id, msg, "发送验证码失败");
     }
