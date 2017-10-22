@@ -18,11 +18,11 @@ public class Mobile extends JFrame {
 	public static JTable table;
 	public static JButton btnLoad, btnSendMsg, btnLogin, btnBuy, btnSave;
 	private JTextField inputMaxSendMsgReq, inputMaxLoginReq, inputMaxBuyReq, inputGoodsId, inputSkuId;
-	public volatile static String localPath;
+	private JComboBox damaCombo;
+	public static volatile String localPath;
 	public static FileWriter logWriter, resultWriter;
-	public static Object lock = new Object();//表格锁
-	public static Object lockFile = new Object();//文件锁
 	public ReqManager reqManager;
+	public static volatile int damaPlatForm = 0;
 	private String selectedFileName;
 	private static DefaultTableModel tableModel;
 	private Vector<String> columnVector;
@@ -92,7 +92,7 @@ public class Mobile extends JFrame {
 				}
 			}
 		});
-		setBounds(width/2-325,100,650,400);
+		setBounds(width/2-325,100,650,500);
 //		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//getContentPane().add(label,BorderLayout.NORTH);
 
@@ -170,6 +170,12 @@ public class Mobile extends JFrame {
 		labelStock.setFont(new Font("微软雅黑",Font.PLAIN,12));
 		labelStock.setBounds(40, 330, 90, 20);
 
+		damaCombo = new JComboBox();
+		damaCombo.addItem("联众");
+		damaCombo.addItem("云打码");
+		damaCombo.setBounds(40, 360, 90, 20);
+
+
 		JPanel panel=new JPanel();		
 		panel.setLayout(null);
 		panel.add(btnLogin,null);
@@ -188,6 +194,7 @@ public class Mobile extends JFrame {
 		panel.add(inputGoodsId,null);
 		panel.add(inputSkuId,null);
 		panel.add(labelStock,null);
+		panel.add(damaCombo);
 
 		tableModel=new DefaultTableModel();
 		columnVector=new Vector();
@@ -255,6 +262,12 @@ public class Mobile extends JFrame {
 				btnBuy.setEnabled(false);
 				inputMaxBuyReq.setEditable(false);
             }
+		});
+		damaCombo.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Mobile.damaPlatForm = ((JComboBox)e.getSource()).getItemCount();
+			}
 		});
 
         inputMaxSendMsgReq.addFocusListener(new FocusListener(){
