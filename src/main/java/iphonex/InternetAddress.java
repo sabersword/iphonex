@@ -25,6 +25,7 @@ public class InternetAddress extends IPhoneX{
     private String codePath;
     private String captcha;
     private String artifact;
+    private String addressInfo;
     private final String userAgent = "Mozilla/5.0 (Linux; Android 6.0.1; SM-C7000 Build/MMB29M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/55.0.2883.91 Mobile Safari/537.36 leadeon/4.0.0";
     private final HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
 
@@ -66,7 +67,10 @@ public class InternetAddress extends IPhoneX{
         });
         okHttpClient = mBuilder.build();
         codePath = "img/" + String.valueOf(id) + ".jpg";
-
+        addressInfo = "AddressInfo," + cellNum + "," + cellNumEnc + "," +
+                recName + "," + recPhoneNo + "," +
+                provinceCode + "," + cityCode + "," +
+                regionCode + "," + street;
     }
 
     /**
@@ -417,7 +421,7 @@ public class InternetAddress extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(cellNum + ":" + e.toString());
+                onBuyFail(addressInfo);
             }
 
             @Override
@@ -427,13 +431,9 @@ public class InternetAddress extends IPhoneX{
                 response.close();
                 if(result.contains("添加常用收货地址成功")) {
                     System.out.println("add success");
-                    String info = cellNum + "," + cellNumEnc + "," +
-                            recName + "," + recPhoneNo + "," +
-                            provinceCode + "," + cityCode + "," +
-                            regionCode + "," + street;
-                    onBuySuccess(info);
+                    onBuySuccess(addressInfo);
                 }else{
-                    onBuyFail(cellNum + ":" + result);
+                    onBuyFail(addressInfo);
                 }
             }
         });
