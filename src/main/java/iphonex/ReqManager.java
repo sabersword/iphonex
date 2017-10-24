@@ -134,7 +134,7 @@ public class ReqManager {
 						String currentSkuId = this.iphonexVec.get(id).skuId;
 						hasStock.put(currentSkuId, false);
 					}
-					if (!code.equals("2")){	// 只要不提示未登录，则选一个有货的skuId重复购买。（提前确保地址有效，对于超时等异常重复购买）
+					if (!code.equals("2") && ! result.contains("login")){	// 只要不提示未登录，则选一个有货的skuId重复购买。（提前确保地址有效，对于超时等异常重复购买）
 						String currentSkuId = "";
 						for (HashMap.Entry<String, Boolean> entry : hasStock.entrySet()) {
 							if (entry.getValue()){

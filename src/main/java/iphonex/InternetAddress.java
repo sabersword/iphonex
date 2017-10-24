@@ -187,7 +187,11 @@ public class InternetAddress extends IPhoneX{
                 int width = bi.getWidth();
                 int height = bi.getHeight();
                 if (width == 200 && height == 50) {
-                    dama();
+                    if(Mobile.damaPlatForm == 0) {
+                        dama();
+                    }else {
+                        yunDama();
+                    }
                 }else{
                     getCaptcha();
                 }
@@ -222,6 +226,69 @@ public class InternetAddress extends IPhoneX{
             }
         });
     }
+    public void yunDama() {
+        Call call = client.newCall(YUNDama.getDamaRequest(codePath));
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String result = response.body().string();
+                System.out.println("yunDama: " + result);
+                response.close();
+                if (result.contains("\"ret\":0")) {
+                    String cid = Utils.getValue(result, "cid\":", ",");
+                    System.out.println("cid:" + cid);
+                    try {
+                        Thread.sleep(3000);
+                        getYunDamaResult(cid, 10);  //需要等待一段时间才有结果,最长等待时间30s
+                    }catch (Exception e){
+                        onLoginFail(cellNum + ":" + result);
+                    }
+                } else {
+                    onLoginFail(cellNum + ":" + result);
+                }
+            }
+        });
+    }
+    public void getYunDamaResult(final String cid, final int leftTryCount) {
+        Request request = new Request.Builder()
+                .url("http://api.yundama.com/api.php?method=result&cid=" + cid)
+                .build();
+        Call call= client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String result = response.body().string();
+                response.close();
+                captcha = Utils.getValue(result, "\"text\":\"", "\"");
+                System.out.println("captcha: " + captcha);
+                if(!captcha.equals("")) {
+                    verifyCaptcha();
+                }else{
+                    if(result.contains("-3002") && leftTryCount > 1){
+                        try {
+                            Thread.sleep(3000);
+                        }catch (Exception e){
+
+                        }
+                        getYunDamaResult(cid, leftTryCount - 1);
+                    }else {
+                        onLoginFail(cellNum + ":" + result);
+                    }
+                }
+            }
+            @Override
+            public void onFailure(Call call, IOException e) {
+                onLoginFail(cellNum + ":" + e.toString());
+
+            }
+        });
+    }
+
     public void verifyCaptcha() {
         System.out.println("verifyCaptcha...");
         Request request = new Request.Builder()
@@ -421,7 +488,7 @@ public class InternetAddress extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                onBuyFail(addressInfo);
+                onBuyFail(e.toString() + addressInfo);
             }
 
             @Override
@@ -433,7 +500,7 @@ public class InternetAddress extends IPhoneX{
                     System.out.println("add success");
                     onBuySuccess(addressInfo);
                 }else{
-                    onBuyFail(addressInfo);
+                    onBuyFail(result + addressInfo);
                 }
             }
         });
