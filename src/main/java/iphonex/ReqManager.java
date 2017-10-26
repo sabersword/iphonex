@@ -29,7 +29,7 @@ public class ReqManager {
 
 	protected volatile boolean buyState = false;
 	protected volatile HashMap<String, Boolean> hasStock;
-	public static final int HEART_BEAT_PERIOD = 300000;
+	public static final int HEART_BEAT_PERIOD = 600000;
 	public static final int HEART_BEAT_INTERVAL = 100;
 
 	public ReqManager(Mobile mobile){
@@ -111,14 +111,32 @@ public class ReqManager {
 		}
 
 	}
-	public synchronized void startBuy(int maxParaReqNum, String goodsId, String skuId){
+	public synchronized void startBuy(int maxParaReqNum, String goodsId, String skuId, int mode){
 		this.maxParaBuyReqNum = maxParaReqNum;
 		setGoodsId(goodsId);
 		setSkuId(skuId);
-		buy(-1, "", "");
+		String result = "";
+		if (mode == 2){
+		    result = "STOCK_ZERO";
+        }
+		buy(-1, result, "");
 	}
 
+
 	public synchronized void buy(int id, String result, String state){
+	    if (result.equals("STOCK_ZERO")){
+	        try {
+                Thread.sleep(200);
+            }catch (Exception e){
+
+            }
+            this.iphonexVec.get(0).onGetStock(goodsId, skuId);
+            return;
+        }
+        if (result.equals("STOCK_ACTIVE")){
+            id = -1;  //开始探测
+        }
+
 		int tmpBuyReqNum = maxParaBuyReqNum;
 		if(id >= 0){
 			if (state.contains("成功")){
@@ -135,33 +153,16 @@ public class ReqManager {
 						String currentSkuId = this.iphonexVec.get(id).skuId;
 						hasStock.put(currentSkuId, false);
 					}
-					if (!code.equals("2") && ! result.contains("login")){	// 只要不提示未登录，则选一个有货的skuId重复购买。（提前确保地址有效，对于超时等异常重复购买）
-						String currentSkuId = "";
-						for (HashMap.Entry<String, Boolean> entry : hasStock.entrySet()) {
-							if (entry.getValue()){
-								currentSkuId = entry.getKey();
-								break;
-							}
-						}
-						String currentStatus = "商品已无货";
-						if(!currentSkuId.equals("")){
-							this.iphonexVec.get(id).onBuy(goodsId, currentSkuId);
-							currentStatus = "重新购买...";
-						}
-						mobile.updateTableState(id, currentStatus);
-						return;
-					}
 				}
-
 
 				//试探阶段只用一个账号，且当监测当已经登录有效时，重复尝试购买，否则用下一个帐号
 				if ((! buyState) && result.contains("BUY ERROR")) {
 					tmpBuyReqNum = 1;
-					if (! code.equals("2")) {//登录有效重复购买，否则会启动下一个账号
+					if (! code.equals("2") && !result.contains("login")) {//登录有效重复购买，否则会启动下一个账号
 						this.iphonexVec.get(id).onBuy(goodsId, skuId);
 						mobile.updateTableState(id, "重新购买...");
 						try {
-							Thread.sleep(500);//0.5s
+							Thread.sleep(200);//0.5s
 						}catch (Exception e){
 
 						}

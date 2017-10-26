@@ -227,10 +227,10 @@ public class Mobile extends JFrame {
 		JComboBox modeCombo = new JComboBox();
 		modeCombo.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
-		        Mobile.mode  = ((JComboBox)e.getSource()).getItemCount();
+		        Mobile.mode  = ((JComboBox)e.getSource()).getSelectedIndex();
 		    }
 		});
-		modeCombo.setModel(new DefaultComboBoxModel(new String[] {"试探", "暴力"}));
+		modeCombo.setModel(new DefaultComboBoxModel(new String[] {"试探", "暴力", "库存"}));
 		modeCombo.setBounds(40, 390, 90, 20);
 		panel.add(modeCombo);
 	
@@ -269,7 +269,7 @@ public class Mobile extends JFrame {
 		btnBuy.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(final MouseEvent arg0){
                 int maxReqNum = Integer.valueOf(inputMaxBuyReq.getText().trim());
-                reqManager.startBuy(maxReqNum, inputGoodsId.getText().trim(), inputSkuId.getText().trim());
+                reqManager.startBuy(maxReqNum, inputGoodsId.getText().trim(), inputSkuId.getText().trim(), mode);
 				btnBuy.setEnabled(false);
 				inputMaxBuyReq.setEditable(false);
             }
@@ -379,7 +379,7 @@ public class Mobile extends JFrame {
 			ins = new FileReader(srcFile);
 			BufferedReader readBuf = new BufferedReader(ins);
 			String line;
-			if (mode == 0)
+			if (mode == 0 || mode == 2)
 			    reqManager = new ReqManager(this);
 			else
 			    reqManager = new ViolentReqManager(this);
@@ -396,7 +396,7 @@ public class Mobile extends JFrame {
 //				AppBuy appBuy = new AppBuy(reqManager, id, elementArr);
 //				InternetAddress iphonex = new InternetAddress(reqManager, id, elementArr);
 				InternetBuy iphonex;
-				if (mode == 0)
+				if (mode == 0 || mode == 2)
 				    iphonex = new InternetBuy(reqManager, id, elementArr);
 				else
 				    iphonex = new ViolentInternetBuy(reqManager, id, elementArr);

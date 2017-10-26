@@ -397,9 +397,9 @@ public class InternetBuy extends IPhoneX{
             }
         });
     }
-
-    public void getstock(){
-        String url = "http://shop.10086.cn/ajax/detail/getstock.json?goods_id="+goodsId+"&merchant_id="+merchantId+"&sale_type=1&sku_id="+skuId;
+    @Override
+    public void onGetStock(String goodsId, String skuId){
+        String url = "http://shop.10086.cn/ajax/detail/getstock.json?goods_id="+goodsId+"&merchant_id=1000049&sale_type=1&sku_id="+skuId;
         System.out.println("cookie:" + getReqCookie());
         Request request = new Request.Builder()
                 .url(url)
@@ -410,17 +410,20 @@ public class InternetBuy extends IPhoneX{
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-//                onBuyFail(cellNum + " " + e.toString());
+                onBuyFail("STOCK_ZERO");
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-//                addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
                 response.close();
-                System.out.println("getstock:" + result);
-                cookieStore.get("shop.10086.cn");
-                userinfo();
+                String stock = Utils.getValue(result,"\"stock\":", ",");
+                if (stock.equals("") || stock.equals("0")){
+                    onBuyFail("STOCK_ZERO");
+                }else {
+                    onBuyFail("STOCK_ACTIVE");
+                }
+
             }
         });
     }
@@ -610,7 +613,7 @@ public class InternetBuy extends IPhoneX{
                 System.out.println("submit order: " + result );
                 response.close();
                 if (result.contains("topay")){
-                    onBuySuccess(cellNum + "," + cellNumEnc);
+                    onBuySuccess(cellNum + "," + cellNumEnc + "," + goodsId + "," + skuId);
                 }else{
                     onBuyFail(cellNum + "" + result);
                 }
