@@ -2,7 +2,7 @@ package iphonex;
 
 
 public class IPhoneX {
-    private ReqManager reqManager;
+    protected ReqManager reqManager;
     public final int id;
 
     public String cellNum;
@@ -16,7 +16,6 @@ public class IPhoneX {
 
     public String goodsId;
     public String skuId;
-
 
     public IPhoneX(ReqManager reqManager, int id, String[] elementArr){
         this.reqManager = reqManager;

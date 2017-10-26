@@ -395,7 +395,11 @@ public class Mobile extends JFrame {
 //				TestBuy testBuy = new TestBuy(reqManager, id, elementArr);
 //				AppBuy appBuy = new AppBuy(reqManager, id, elementArr);
 //				InternetAddress iphonex = new InternetAddress(reqManager, id, elementArr);
-				InternetBuy iphonex = new InternetBuy(reqManager, id, elementArr);
+				InternetBuy iphonex;
+				if (mode == 0)
+				    iphonex = new InternetBuy(reqManager, id, elementArr);
+				else
+				    iphonex = new ViolentInternetBuy(reqManager, id, elementArr);
 				reqManager.iphonexVec.add(iphonex);
 				id += 1;
 			}
