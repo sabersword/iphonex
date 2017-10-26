@@ -9,27 +9,27 @@ public class ReqManager {
 	public Mobile mobile;
 	public Vector<IPhoneX> iphonexVec;
 
-	private volatile int curSendMsgReqNum; //已请求数目
-	private volatile int curSendMsgFinishNum;  //已完成数目
-	private volatile int curSendMsgSucNum; //已成功数目
-	private volatile int maxParaSendMsgReqNum; //最大并发请求
+	protected volatile int curSendMsgReqNum; //已请求数目
+	protected volatile int curSendMsgFinishNum;  //已完成数目
+	protected volatile int curSendMsgSucNum; //已成功数目
+	protected volatile int maxParaSendMsgReqNum; //最大并发请求
 
-	private volatile int curLoginReqNum;
-	private volatile int curLoginFinishNum;
-	private volatile int curLoginSucNum;
-	private volatile int maxParaLoginReqNum;
+	protected volatile int curLoginReqNum;
+	protected volatile int curLoginFinishNum;
+	protected volatile int curLoginSucNum;
+	protected volatile int maxParaLoginReqNum;
 
-	private volatile int curBuyReqNum;
-	private volatile int curBuyFinishNum;
-	private volatile int curBuySucNum;
-	private volatile int maxParaBuyReqNum;
+	protected volatile int curBuyReqNum;
+	protected volatile int curBuyFinishNum;
+	protected volatile int curBuySucNum;
+	protected volatile int maxParaBuyReqNum;
 
-	private volatile String goodsId;
-	private volatile String skuId;
+	protected volatile String goodsId;
+	protected volatile String skuId;
 
-	private volatile boolean buyState = false;
-	private volatile HashMap<String, Boolean> hasStock;
-	private static final int heartBeatPeriod = 300000;
+	protected volatile boolean buyState = false;
+	protected volatile HashMap<String, Boolean> hasStock;
+	protected static final int heartBeatPeriod = 300000;
 
 	public ReqManager(Mobile mobile){
 		this.mobile = mobile;
