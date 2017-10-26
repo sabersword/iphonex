@@ -23,6 +23,7 @@ public class Mobile extends JFrame {
 	public static FileWriter logWriter, resultWriter;
 	public ReqManager reqManager;
 	public static volatile int damaPlatForm = 0;
+	public static volatile int mode = 0;
 	private String selectedFileName;
 	private static DefaultTableModel tableModel;
 	private Vector<String> columnVector;
@@ -222,6 +223,16 @@ public class Mobile extends JFrame {
 		c.setLayout(new BorderLayout());
 		c.add(scrollPane,BorderLayout.WEST);
 		c.add(panel,BorderLayout.CENTER);
+		
+		JComboBox modeCombo = new JComboBox();
+		modeCombo.addActionListener(new ActionListener() {
+		    public void actionPerformed(ActionEvent e) {
+		        Mobile.mode  = ((JComboBox)e.getSource()).getItemCount();
+		    }
+		});
+		modeCombo.setModel(new DefaultComboBoxModel(new String[] {"试探", "暴力"}));
+		modeCombo.setBounds(40, 390, 90, 20);
+		panel.add(modeCombo);
 	
 		btnLoad.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(final MouseEvent arg0){
@@ -368,7 +379,10 @@ public class Mobile extends JFrame {
 			ins = new FileReader(srcFile);
 			BufferedReader readBuf = new BufferedReader(ins);
 			String line;
-			reqManager = new ReqManager(this);
+			if (mode == 0)
+			    reqManager = new ReqManager(this);
+			else
+			    reqManager = new ViolentReqManager(this);
 			int id = 0;
 			while ((line = readBuf.readLine()) != null) {
 				line = line.trim();
@@ -381,7 +395,11 @@ public class Mobile extends JFrame {
 //				TestBuy testBuy = new TestBuy(reqManager, id, elementArr);
 //				AppBuy appBuy = new AppBuy(reqManager, id, elementArr);
 //				InternetAddress iphonex = new InternetAddress(reqManager, id, elementArr);
-				InternetBuy iphonex = new InternetBuy(reqManager, id, elementArr);
+				InternetBuy iphonex;
+				if (mode == 0)
+				    iphonex = new InternetBuy(reqManager, id, elementArr);
+				else
+				    iphonex = new ViolentInternetBuy(reqManager, id, elementArr);
 				reqManager.iphonexVec.add(iphonex);
 				id += 1;
 			}
@@ -424,5 +442,4 @@ public class Mobile extends JFrame {
 		}
 		
 	}
-
 }

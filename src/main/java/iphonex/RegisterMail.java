@@ -112,6 +112,7 @@ public class RegisterMail extends Thread {
         try {
             Response response = call.execute();
             String result = response.body().string();
+            response.close();
             mail = Utils.getValue(result, "type=\"text\" value=\"", "\"");
             if (mail.isEmpty()) {
                 writeLog("mail为空,获取失败");
@@ -132,6 +133,7 @@ public class RegisterMail extends Thread {
             Response response = call.execute();
             BufferedImage bi = ImageIO.read(response.body().byteStream());
             ImageIO.write(bi, "png", new File(captchaPath));
+            response.close();
         } catch (IOException e) {
             writeLog(e.getMessage());
             getCaptcha();
@@ -144,6 +146,7 @@ public class RegisterMail extends Thread {
         try {
             Response response = call.execute();
             String result = response.body().string();
+            response.close();
             System.out.println("dama: " + result);
             if (result.contains("\"result\":true")) {
                 this.captcha = Utils.getValue(result, "val\":\"", "\"");
@@ -177,6 +180,7 @@ public class RegisterMail extends Thread {
         try {
             Response response = call.execute();
             String result = response.body().string();
+            response.close();
             System.out.println("registerSubmit:" + result);
             if (result.contains("注册成功")) {
                 writeLog(loginName + "注册成功");
@@ -207,6 +211,7 @@ public class RegisterMail extends Thread {
         try {
             Response response = call.execute();
             String result = response.body().string();
+            response.close();
             System.out.println(result);
         } catch (IOException e) {
             writeLog(e.getMessage());
@@ -228,6 +233,7 @@ public class RegisterMail extends Thread {
         try {
             Response response = call.execute();
             String result = response.body().string();
+            response.close();
             System.out.println(Thread.currentThread().getName() + ":" + result);
             mid = Utils.getValue(result, "MID\":", ",");
             if (mid.isEmpty()) {
@@ -265,6 +271,7 @@ public class RegisterMail extends Thread {
         try {
             Response response = call.execute();
             String result = response.body().string();
+            response.close();
             System.out.println(result);
             verifyKey = Utils.getValue(result, "verifyKey=", "\\");
             System.out.println("verifyKey:" + verifyKey);
@@ -281,6 +288,7 @@ public class RegisterMail extends Thread {
         try {
             Response response = call.execute();
             String result = response.body().string();
+            response.close();
             if (result.contains("激活成功")) {
                 System.out.println("成功激活" + loginName);
                 writeLog(loginName + "激活成功");
