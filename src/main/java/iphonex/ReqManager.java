@@ -29,7 +29,8 @@ public class ReqManager {
 
 	protected volatile boolean buyState = false;
 	protected volatile HashMap<String, Boolean> hasStock;
-	protected static final int heartBeatPeriod = 300000;
+	public static final int HEART_BEAT_PERIOD = 300000;
+	public static final int HEART_BEAT_INTERVAL = 100;
 
 	public ReqManager(Mobile mobile){
 		this.mobile = mobile;
@@ -82,7 +83,7 @@ public class ReqManager {
 		curLoginReqNum = 0;
 		curLoginSucNum = 0;
 		login(-1, "", "");
-		new Timer().schedule(new HeartBeat(this), heartBeatPeriod, heartBeatPeriod);
+		new Timer().schedule(new HeartBeat(this), HEART_BEAT_PERIOD, HEART_BEAT_PERIOD);
 	}
 	public synchronized void login(int id, String result, String state){
 		if(id >= 0){

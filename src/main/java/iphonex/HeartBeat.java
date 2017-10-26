@@ -17,6 +17,11 @@ public class HeartBeat extends TimerTask {
     public void run() {
         for (int i = 0; i < reqManager.iphonexVec.size(); i++) {
             reqManager.iphonexVec.get(i).onHeartBeatBuy("1045219", "1040095");
+            try {
+                Thread.sleep(ReqManager.HEART_BEAT_INTERVAL);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
