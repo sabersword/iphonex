@@ -126,7 +126,7 @@ public class ReqManager {
 	public synchronized void buy(int id, String result, String state){
 	    if (result.equals("STOCK_ZERO")){
 	        try {
-                Thread.sleep(200);
+                Thread.sleep(100);
             }catch (Exception e){
 
             }
@@ -134,7 +134,8 @@ public class ReqManager {
             return;
         }
         if (result.equals("STOCK_ACTIVE")){
-            id = -1;  //开始探测
+//            id = -1;  //开始探测
+            buyState = true;
         }
 
 		int tmpBuyReqNum = maxParaBuyReqNum;
