@@ -58,7 +58,6 @@ public class InternetBuy extends IPhoneX{
                 for(Cookie cookie:cookies){
                     String str = cookie.toString();
                     String[] arr = str.split(";");
-                    System.out.println("str:" + str);
 
                     for (String item: arr) {
                         String[] itemArr = item.split("=");
@@ -400,7 +399,6 @@ public class InternetBuy extends IPhoneX{
     @Override
     public void onGetStock(String goodsId, String skuId){
         String url = "http://shop.10086.cn/ajax/detail/getstock.json?goods_id="+goodsId+"&merchant_id=1000049&sale_type=1&sku_id="+skuId;
-        System.out.println("cookie:" + getReqCookie());
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Referer", goodsUrl)
@@ -417,8 +415,12 @@ public class InternetBuy extends IPhoneX{
             public void onResponse(Call call, Response response) throws IOException {
                 String result = response.body().string();
                 response.close();
+                System.out.println("stock:" + result);
                 String stock = Utils.getValue(result,"\"stock\":", ",");
+                String lock = Utils.getValue(result,"\"lock\":", ",");
                 if (stock.equals("") || stock.equals("0")){
+                    onBuyFail("STOCK_ZERO");
+                }else if (stock.equals(lock)) {
                     onBuyFail("STOCK_ZERO");
                 }else {
                     onBuyFail("STOCK_ACTIVE");
@@ -469,7 +471,7 @@ public class InternetBuy extends IPhoneX{
             public void onResponse(Call call, Response response) throws IOException {
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
-                System.out.println("ssocheck2:" + result);
+//                System.out.println("ssocheck2:" + result);
                 response.close();
                 if (result.contains(cellNum)){
                     onLoginSuccess(cellNum);
@@ -505,7 +507,7 @@ public class InternetBuy extends IPhoneX{
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
                 cartCode = Utils.getValue(result, "cart_code=", "\"");
-//                System.out.println("cart_code:" + cartCode);
+                System.out.println("buy:" + result);
                 response.close();
                 if (! cartCode.equals("")){
                     checkOrder();
