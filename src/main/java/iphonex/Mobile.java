@@ -158,12 +158,12 @@ public class Mobile extends JFrame {
 		inputGoodsId=new JTextField();
 		inputGoodsId.setBounds(40, 270, 90, 20);
 		inputGoodsId.setHorizontalAlignment(JTextField.CENTER);
-		inputGoodsId.setText("1045210");
+		inputGoodsId.setText("1045290");
 		
 		inputSkuId=new JTextField();
 		inputSkuId.setBounds(40, 290, 90, 20);
 		inputSkuId.setHorizontalAlignment(JTextField.CENTER);
-		inputSkuId.setText("1040095");
+		inputSkuId.setText("1040401");
 		
 		labelStock=new JLabel();
 		labelStock.setText("库存");
@@ -343,7 +343,7 @@ public class Mobile extends JFrame {
 		
 	}
 	public void updateTableState(int id, String status){
-	    System.out.println("table: "+status);
+//	    System.out.println("table: "+status);
 	    this.table.setValueAt(status, id, 3);
     }
     public void updateSendMsgState(int curSucNum, int curReqNum){
