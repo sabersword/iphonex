@@ -7,7 +7,7 @@ import java.io.*;
 public class LZDama {
     public static final String damaUrl = "http://v1-http-api.jsdama.com/api.php?mod=php&act=upload";
     public static final String userName = "confiself";
-    public static final String userPsw = "HuZhengHui0671";
+    public static final String userPsw = "psw";
     public static final String yzmMinLen = "4";
     public static final String yzmMaxLen = "6";
     public static final String yzmTypeMark = "1014";
