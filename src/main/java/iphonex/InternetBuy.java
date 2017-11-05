@@ -507,7 +507,7 @@ public class InternetBuy extends IPhoneX{
                 addRspCookie(response.headers("Set-Cookie"));
                 String result = response.body().string();
                 cartCode = Utils.getValue(result, "cart_code=", "\"");
-                System.out.println("buy:" + result);
+//                System.out.println("buy:" + result);
                 response.close();
                 if (! cartCode.equals("")){
                     checkOrder();
