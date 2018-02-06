@@ -9,7 +9,7 @@ import okhttp3.OkHttpClient;
 /**
  * 
 * @ClassName: Client 
-* @Description: 不管怎么样,提交一下总是好的,对吧....
+* @Description: 不管怎么样,提交一下总是好的,对吧
 * @author god
 * @date 2018年2月6日 下午8:09:00
  */
