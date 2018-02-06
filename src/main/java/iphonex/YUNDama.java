@@ -8,7 +8,7 @@ import java.io.IOException;
 public class YUNDama {
     public static final String damaUrl = "http://api.yundama.com/api.php";
     public static final String userName = "confiself";
-    public static final String userPsw = "huzhenghui119";
+    public static final String userPsw = "psw";
     public static final String codeType = "5006";
     public static final String appid = "4128";
     public static final String appkey = "39c48804502ca5b9167f78a7a3d9935d";
